@@ -21,4 +21,3 @@ expmA = expm(Ahat*delT);
 
 F = expmA(1:length(A(:,1)),1:length(A(1,:)))
 G = expmA(1:length(A(:,1)),length(A(1,:))+1:length(A(1,:))+length(B(1,:)))
-
