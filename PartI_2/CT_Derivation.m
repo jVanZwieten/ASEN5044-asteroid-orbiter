@@ -2,10 +2,9 @@ clc
 clear
 close all
 
-syms x y z xd yd zd mu
-assume(mu,"real")
+syms x y z xd yd zd r mu real
 
-r = sqrt(x^2 + y^2 + z^2);
+r = norm([x y z]);
 
 F = [xd yd zd -mu*x/r^3 -mu*y/r^3 -mu*z/r^3]';
 
@@ -19,6 +18,25 @@ yd = 0;
 zd = sqrt(mu/norm([x y z]));
 
 Abar = subs(pFpX)
-Bbar = [zeros(3,3); eye(3,3)]
+Bbar = [zeros(3,3); eye(3,3)];
+
+
+clear
+syms x y z r f l1 l2 l3 ic1 ic2 ic3 jc1 jc2 jc3 kc1 kc2 kc3 real
+
+l = [l1 l2 l3]';
+r = [x y z]';
+ic = [ic1 ic2 ic3]';
+jc = [jc1 jc2 jc3]';
+kc = [kc1 kc2 kc3]';
+
+
+H = [f*((l-r)'*ic)/((l-r)'*kc);
+     f*((l-r)'*jc)/((l-r)'*kc)];
+
+pHpX = jacobian(H,[x y z xd yd zd]);
+
+Cbar = subs(pHpX)
+
 
 
