@@ -2,14 +2,14 @@ classdef f
     methods(Static)
 
         function a2B = twoBody(state)
-            global muA
+            global mu
             
             r = state(1:3);
             rdot = state(4:6);
             a2B = zeros(6,1);
 
             a2B(1:3) = rdot;
-            a2B(4:6) = -(muA/(norm(r))^3)*r;
+            a2B(4:6) = -(mu/(norm(r))^3)*r;
 
          end
 
