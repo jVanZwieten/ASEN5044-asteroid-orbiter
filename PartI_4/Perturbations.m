@@ -33,9 +33,9 @@ end
 
 dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
 
-% 
-% asrp = f.solarRadPress();
-% u = asrp(4:6);
+
+asrp = f.solarRadPress();
+u = asrp(4:6);
 
 dx = zeros(6,length(1:delTobs:tEnd)+1);
 linear_state = zeros(6,length(1:delTobs:tEnd)+1);
@@ -98,40 +98,3 @@ subplot(6,1,6)
 plot(tVec,dx(6,:))
 ylabel('\Deltazdot (km)')
 xlabel('Time (hours)')
-
-
-% generate linearized measurements
-f=2089;
-y = nan(2,length(0:delTobs:tEnd));
-figure()
-for i = 1:100
-    theta = omega*(i-1)*delTobs;
-    R_AtoN(:,:,i)= [cos(theta) -sin(theta) 0;
-                    sin(theta)  cos(theta) 0;
-                        0           0      1];
-
-    i_C = R_CtoN(:,1,i);
-    j_C = R_CtoN(:,2,i);
-    k_C = R_CtoN(:,3,i);
-    l = R_AtoN(:,:,i)*pos_lmks_A(:,1);
-    r = NL_state(1:3,i);
-    nu = dot(l-r,i_C);
-    nv = dot(l-r,j_C);
-    d = dot(l-r,k_C);
-
-    H = f*[(-i_C(1)*d + k_C(1)*nu)/d^2 (-i_C(2)*d + k_C(2)*nu)/d^2 (-i_C(3)*d + k_C(3)*nu)/d^2 0 0 0;
-           (-j_C(1)*d + k_C(1)*nv)/d^2 (-j_C(2)*d + k_C(2)*nv)/d^2 (-j_C(3)*d + k_C(3)*nv)/d^2 0 0 0];
-    y(:,i) = H*dx(:,i);
-    
-    % if(~isVisible(y(:,i),l,r,k_C))
-    %         y(:,i) = nan(2,1);
-    % end
-
-
-end
-tVec = 0:600:tEnd;
-plot(tVec/3600,y(1,:),'x')
-r=linear_state(1:3,1);
-u = f*(dot(l-r,i_C)/dot(l-r,k_C)) + 512;
-v = f*(dot(l-r,j_C)/dot(l-r,k_C)) + 512;
-
