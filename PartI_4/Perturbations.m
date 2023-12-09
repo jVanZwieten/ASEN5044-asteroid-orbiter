@@ -1,21 +1,23 @@
-clc
-clear
+% clc
+% clear
 close all
 format short
 
-addpath(genpath(fileparts(pwd)))
-
-global mu rsa phi0 rho Am
+global mu rsa phi0 rho Am omega umin umax
 mu = 4.892E-9;
 rsa = [1.5E8 0 0]';
 phi0 = 1E14;
 rho = 0.4;
 Am = (1/62)*10^(-6);
+omega = 2*pi/(4.296057*3600);
+umin = 0;
+umax = 1024;
 
 delTobs = 600;
+tEnd = 72*60*60;
+
 delTint = 60; % s
 tEnd = 72*60*60; % 72h -> s
-sec2hr = 3600;
 
 r0 = [0 -1 0]';
 rdot0 = [0 0 sqrt(mu/norm(r0))]';
@@ -31,9 +33,9 @@ end
 
 dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
 
-
-asrp = f.solarRadPress();
-u = asrp(4:6);
+% 
+% asrp = f.solarRadPress();
+% u = asrp(4:6);
 
 dx = zeros(6,length(1:delTobs:tEnd)+1);
 linear_state = zeros(6,length(1:delTobs:tEnd)+1);
@@ -41,14 +43,26 @@ linear_state(:,1) = state0;
 dx(:,1) = dx0;
 
 % linearize about nominal orbit at each 600s time step
-for i = 1:tEnd/delTobs
+for i = 1:tEnd/600
     x = NL_state(1,10*(i-1)+1);
     y = NL_state(2,10*(i-1)+1);
     z = NL_state(3,10*(i-1)+1);
     r = norm(NL_state(1:3,10*(i-1)+1));
 
-    [A,B] = CTsys.dynMat(x,y,z,r);
-    [F,G] = DTsys.dynMat(A,B,delTobs);
+    A = [zeros(3)  eye(3);
+        zeros(3) zeros(3)];
+    A(4:6,1:3) = [3*mu*x^2/r^5 - mu/r^3    3*mu*x*y/r^5          3*mu*x*z;
+                 3*mu*y*x/r^5       3*mu*y^2/r^5 - mu/r^3   3*mu*y*z/r^5;
+                 3*mu*z*x/r^5             3*mu*y*z/r^5    3*mu*z^2/r^5 - mu/r^3];
+
+    B = [zeros(3,3); eye(3,3)];
+
+    Ahat = [A B;
+        zeros(length(B(1,:)),length(A(1,:))),zeros(length(B(1,:)),length(B(1,:)))];
+    expmA = expm(Ahat*delTobs);
+
+    F = expmA(1:length(A(:,1)),1:length(A(1,:)));
+    G = expmA(1:length(A(:,1)),length(A(1,:))+1:length(A(1,:))+length(B(1,:)));
 
     linear_state(:,i+1) = F*linear_state(:,i);
     dx(:,i+1) = F*dx(:,i);
@@ -56,7 +70,7 @@ for i = 1:tEnd/delTobs
 end
 
 % plot perturbed states vs time
-tVec = (0:delTobs:tEnd)/sec2hr;
+tVec = (0:delTobs:tEnd)/60/60;
 figure()
 sgtitle('Linearized perturbations')
 subplot(6,1,1)
@@ -86,5 +100,38 @@ ylabel('\Deltazdot (km)')
 xlabel('Time (hours)')
 
 
+% generate linearized measurements
+f=2089;
+y = nan(2,length(0:delTobs:tEnd));
+figure()
+for i = 1:100
+    theta = omega*(i-1)*delTobs;
+    R_AtoN(:,:,i)= [cos(theta) -sin(theta) 0;
+                    sin(theta)  cos(theta) 0;
+                        0           0      1];
 
+    i_C = R_CtoN(:,1,i);
+    j_C = R_CtoN(:,2,i);
+    k_C = R_CtoN(:,3,i);
+    l = R_AtoN(:,:,i)*pos_lmks_A(:,1);
+    r = NL_state(1:3,i);
+    nu = dot(l-r,i_C);
+    nv = dot(l-r,j_C);
+    d = dot(l-r,k_C);
+
+    H = f*[(-i_C(1)*d + k_C(1)*nu)/d^2 (-i_C(2)*d + k_C(2)*nu)/d^2 (-i_C(3)*d + k_C(3)*nu)/d^2 0 0 0;
+           (-j_C(1)*d + k_C(1)*nv)/d^2 (-j_C(2)*d + k_C(2)*nv)/d^2 (-j_C(3)*d + k_C(3)*nv)/d^2 0 0 0];
+    y(:,i) = H*dx(:,i);
+    
+    % if(~isVisible(y(:,i),l,r,k_C))
+    %         y(:,i) = nan(2,1);
+    % end
+
+
+end
+tVec = 0:600:tEnd;
+plot(tVec/3600,y(1,:),'x')
+r=linear_state(1:3,1);
+u = f*(dot(l-r,i_C)/dot(l-r,k_C)) + 512;
+v = f*(dot(l-r,j_C)/dot(l-r,k_C)) + 512;
 
