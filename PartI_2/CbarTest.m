@@ -8,12 +8,12 @@ addpath(genpath(fileparts(pwd)))
 data = load('orbitdetermination-finalproj_data_2023_11_14.mat');
 
 global mu fo wA u0 umin umax
-mu = 4.892E-9;
+mu = 4.892E-9;              % gravity parameter of asteroid
 fo = 2089.7959;             % Pixels
-wA = 2*pi/(4.296057*3600);
-u0 = [512 512]';
-umin = [0 0]';
-umax = [1024 1024]';
+wA = 2*pi/(4.296057*3600);  % rad/s; asteroid rotation rate
+u0 = [512 512]';            % center of optical plane
+umin = [0 0]';              % Pixels
+umax = [1024 1024]';        % Pixels
 
 delTint = 60;               % s
 delTobs = 600;              % s
@@ -94,9 +94,6 @@ for i=1:(tEnd/delTint)+1
         j = j+1;
     end
 end
-
-% y
-% yAct
 
 % figure()
 % plot(meas(1,:)-yAct(1,:))
