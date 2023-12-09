@@ -3,6 +3,8 @@ clear
 close all
 format short
 
+addpath(genpath(fileparts(pwd)))
+
 global mu rsa phi0 rho Am
 mu = 4.892E-9;
 rsa = [1.5E8 0 0]';
