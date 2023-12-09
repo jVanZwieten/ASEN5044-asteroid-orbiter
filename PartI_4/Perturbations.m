@@ -13,10 +13,9 @@ rho = 0.4;
 Am = (1/62)*10^(-6);
 
 delTobs = 600;
-tEnd = 72*60*60;
-
 delTint = 60; % s
 tEnd = 72*60*60; % 72h -> s
+sec2hr = 3600;
 
 r0 = [0 -1 0]';
 rdot0 = [0 0 sqrt(mu/norm(r0))]';
@@ -42,26 +41,14 @@ linear_state(:,1) = state0;
 dx(:,1) = dx0;
 
 % linearize about nominal orbit at each 600s time step
-for i = 1:tEnd/600
+for i = 1:tEnd/delTobs
     x = NL_state(1,10*(i-1)+1);
     y = NL_state(2,10*(i-1)+1);
     z = NL_state(3,10*(i-1)+1);
     r = norm(NL_state(1:3,10*(i-1)+1));
 
-    A = [zeros(3)  eye(3);
-        zeros(3) zeros(3)];
-    A(4:6,1:3) = [3*mu*x^2/r^5 - mu/r^3    3*mu*x*y/r^5          3*mu*x*z;
-                 3*mu*y*x/r^5       3*mu*y^2/r^5 - mu/r^3   3*mu*y*z/r^5;
-                 3*mu*z*x/r^5             3*mu*y*z/r^5    3*mu*z^2/r^5 - mu/r^3];
-
-    B = [zeros(3,3); eye(3,3)];
-
-    Ahat = [A B;
-        zeros(length(B(1,:)),length(A(1,:))),zeros(length(B(1,:)),length(B(1,:)))];
-    expmA = expm(Ahat*delTobs);
-
-    F = expmA(1:length(A(:,1)),1:length(A(1,:)));
-    G = expmA(1:length(A(:,1)),length(A(1,:))+1:length(A(1,:))+length(B(1,:)));
+    [A,B] = CTsys.dynMat(x,y,z,r);
+    [F,G] = DTsys.dynMat(A,B,delTobs);
 
     linear_state(:,i+1) = F*linear_state(:,i);
     dx(:,i+1) = F*dx(:,i);
@@ -69,7 +56,7 @@ for i = 1:tEnd/600
 end
 
 % plot perturbed states vs time
-tVec = (0:delTobs:tEnd)/60/60;
+tVec = (0:delTobs:tEnd)/sec2hr;
 figure()
 sgtitle('Linearized perturbations')
 subplot(6,1,1)
