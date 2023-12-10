@@ -83,12 +83,6 @@ for i=1:(tEnd/delTint)+1
     end
 end
 
-<<<<<<< HEAD
-% figure()
-% plot(meas(1,:)-yAct(1,:))
-% hold on
-% plot(meas(2,:)-yAct(2,:))
-=======
 figure()
 plot(tVec/3600, dy(1,:),'x')
 title('Perturbation measurements')
@@ -96,7 +90,6 @@ xlabel('Time (hours)')
 ylabel('\Deltau (pixels)')
 hold on
 % plot(y(2,:)-yAct(2,:))
->>>>>>> 8b74274 (fixed C matrix and delta measurements)
 % 
 % figure()
 % plot(y(1,:)-NL_y(1,:))
