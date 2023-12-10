@@ -29,6 +29,7 @@ tVec = (1:delTint:tEnd)/60/60;
 figure()
 subplot(6,1,1)
 plot(tVec,state(1,1:end-1))
+title('Nonlinear States vs Time')
 xlabel("Time (h)")
 ylabel("x (km)")
 
