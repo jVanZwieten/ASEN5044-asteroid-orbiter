@@ -20,7 +20,7 @@ zd = sqrt(mu/norm([x y z]));
 Abar = subs(pFpX)
 Bbar = [zeros(3,3); eye(3,3)];
 
-
+%%
 clear
 syms x y z xd yd zd r f l1 l2 l3 ic1 ic2 ic3 jc1 jc2 jc3 kc1 kc2 kc3 real
 
