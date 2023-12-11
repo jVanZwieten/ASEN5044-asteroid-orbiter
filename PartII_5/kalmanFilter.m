@@ -1,9 +1,9 @@
 classdef kalmanFilter
     methods(Static)
 
-        function [xM1,PM1] = timeUpd(xP0,u0,PP0,F,G,Q,Gamma)
+        function [xM1,PM1] = timeUpd(xP0,u0,PP0,F,G,Q,Omega)
             xM1 = F*xP0 + G*u0;
-            PM1 = F*PP0*F' + Q;
+            PM1 = F*PP0*F' + Omega*Q*Omega';
         end
 
         function [xP1,PP1] = measUpd(n,xM1,y1,PM1,H1,R)
@@ -11,8 +11,8 @@ classdef kalmanFilter
             xP1 = xM1 + K1*(y1 - H1*xM1);
             PP1 = (eye(n,n)-K1*H1)*PM1;
             % xM1
-            % H1*xM1
-            % PP1
+            H1*xM1;
+            PP1;
             chol(PP1);  % Should crash if we do something dumb
         end
 
