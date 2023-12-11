@@ -1,11 +1,11 @@
-clc
-clear
 close all
 format longg
+clc
+clear
 
-addpath(genpath(fileparts(pwd)))
+%addpath(genpath(fileparts(pwd)))
 
-data = load('orbitdetermination-finalproj_data_2023_11_14.mat');
+data = load("C:\Users\jared\ASEN5044-asteroid-orbiter\orbitdetermination-finalproj_data_2023_11_14.mat");
 
 global mu fo wA u0 umin umax sigW sigU
 mu = 4.892E-9;              % gravity parameter of asteroid
@@ -19,13 +19,14 @@ sigU = 0.25;
 
 delTint = 60;               % s
 delTobs = 600;              % s
-tEnd = 72*60*60;            % 72h -> s
+tEnd = 120*60*60;            % 72h -> s
 
 
 
 r0 = [0 -1 0]';
 rdot0 = [0 0 sqrt(mu/norm(r0))]';
 state0 = [r0; rdot0];
+dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
 asrp = f.solarRadPress();
 asrp = asrp(4:6);
 
@@ -39,6 +40,7 @@ Q = DTsys.noiseMat(W,delTobs);
 
 linear_state = zeros(6,length(1:delTobs:tEnd)+1);
 linear_state(:,1) = state0;
+filt_total_state = [];
 
 meas = nan(2,length(1:delTobs:tEnd)+1);
 y_table = [];
@@ -56,7 +58,7 @@ for i=1:(tEnd/delTint)+1
 
     time = (i-1)*delTint;
 
-    if(~mod(time,delTobs))
+    if(~mod(time,delTobs) && time <= 72*60*60)
         r = NL_state(1:3,i);
 
         Rcn = data.R_CtoN(:,:,j);
@@ -91,7 +93,7 @@ end
 linear_meas = [];
 P0 = [10/1000*eye(3) zeros(3);
       zeros(3) 0.5/1000/1000*eye(3)];
-xP(:,1) = state0;
+xP(:,1) = dx0;
 P_P(:,:,1) = P0;
 xM = [];
 P_M = [];
@@ -108,64 +110,76 @@ for j=1:(tEnd/delTobs)+1
     z = NL_state(3,NLind);
     NL_r = norm(NL_state(1:3,NLind));
 
-    [A,B] = CTsys.dynMat(x,y,z,NL_r);
-    [F,G] = DTsys.dynMat(A,B,delTobs);      
+    [A,B,Gamma] = CTsys.dynMat(x,y,z,NL_r);
+    [F,G,Omega] = DTsys.dynMat(A,B,Gamma,delTobs);      
 
-    linear_state(:,j+1) = F*linear_state(:,j)+G*asrp;%NL_state(:,NLind);
+    linear_state(:,j+1) = NL_state(:,NLind); %F*linear_state(:,j)+G*asrp;
   
     r = linear_state(1:3,j);
 
-    Rcn = data.R_CtoN(:,:,j);
-    ic = Rcn(:,1);
-    jc = Rcn(:,2);
-    kc = Rcn(:,3);
-
-    theta = wA*time;
-    Rna = [cos(theta) -sin(theta) 0;
-           sin(theta) cos(theta) 0;
-           0 0 1];
+   
 
     
-    [xM(:,end+1),P_M(:,:,end+1)] = kalmanFilter.timeUpd(xP(:,end),asrp,P_P(:,:,end),F,G,Q);
+    [xM(:,end+1),P_M(:,:,end+1)] = kalmanFilter.timeUpd(xP(:,end),[0 0 0]',P_P(:,:,end),F,G,Q,Gamma);
     xP_temp = xM(:,end);
     P_P_temp = P_M(:,:,end);
 
     lmks = y_table(find(y_table(:,1)==time),2:4); 
 
-    for l=1:50
-        lmk = lmks(find(lmks(:,1)==l),2:3);
-
-        if(~isempty(lmk))
-            lpos = data.pos_lmks_A(:,l);
-            lrot = Rna*lpos;
-            [H,M] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
+    if time <= y_table(end,1)
+        Rcn = data.R_CtoN(:,:,j);
+        ic = Rcn(:,1);
+        jc = Rcn(:,2);
+        kc = Rcn(:,3);
+    
+        theta = wA*time;
+        Rna = [cos(theta) -sin(theta) 0;
+               sin(theta) cos(theta) 0;
+               0 0 1];
+        for l=1:1
+            lmk = lmks(find(lmks(:,1)==l),2:3);
             
-            [xP_temp,P_P_temp] = kalmanFilter.measUpd(length(A),xP_temp,lmk',P_P_temp,H,R);
-            linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
+    
+            if(~isempty(lmk))
+                lpos = data.pos_lmks_A(:,l);
+                lrot = Rna*lpos;
+                [H,M] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
+                lmk = [0 0];
+    
+                [xP_temp,P_P_temp] = kalmanFilter.measUpd(length(A),xP_temp,lmk',P_P_temp,H,R);
+                %linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
+            end
+    
         end
-
     end
-
     xP(:,end+1) = xP_temp;
     P_P(:,:,end+1) = P_P_temp;
+
+    filt_total_state(:,end+1) = NL_state(:,NLind)+xP(:,end);
 end
 
-% Psig(1,:) = P_P(1,1,:);
+Psig = P_P(1,1,:);
+time = (0:delTobs:tEnd)/3600;
+NLtime = (0:delTint:(tEnd+60))/3600;
+
+figure()
+plot(time,filt_total_state(1,:),'red')
+hold on
+plot(time,NL_state(1,1:10:end-1),'bx')
+
+plot(time,2*sqrt(Psig(1,1:end-1))+filt_total_state(1,:),'black --')
+plot(time,-2*sqrt(Psig(1,1:end-1))+filt_total_state(1,:),'black --')
+
+figure()
+plot(time,NL_state(1,1:10:end-1)-filt_total_state(1,:))
+rows = 1:length(y_table);
 % 
 % figure()
-% plot(1:(tEnd/delTobs)+2,xP(1,:),'red')
+% plot(y_table(rows,3),y_table(rows,4),'blue x')
 % hold on
-% plot(1:(tEnd/delTobs)+2,linear_state(1,:),'blue')
-% plot(1:(tEnd/delTobs)+2,2*sqrt(Psig(1,:))+xP(1,:),'black --')
-% plot(1:(tEnd/delTobs)+2,-2*sqrt(Psig(1,:))+xP(1,:),'black --')
-
-rows = 1:length(y_table);
-
-plot(y_table(rows,3),y_table(rows,4),'blue x')
-hold on
-plot(linear_meas(rows,3),linear_meas(rows,4),'red o')
-xlim([umin(1) umax(1)])
-ylim([umin(1) umax(1)])
+% plot(linear_meas(rows,3),linear_meas(rows,4),'red o')
+% xlim([umin(1) umax(1)])
+% ylim([umin(1) umax(1)])
 
 % plotter = [];
 % for i=1:length(NL_state)
