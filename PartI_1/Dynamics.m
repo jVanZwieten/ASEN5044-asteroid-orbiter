@@ -4,17 +4,17 @@ close all
 format longg
 
 global muA rsa phi0 rho Am
-muA = 4.892E-9; % km^3/s^2
-rsa = [1.5E8 0 0]'; % km
-phi0 = 1E14; % kg*km/s^2
-rho = 0.4; % coefficient of reflectivity
-Am = (1/62)*10^(-6); % km^2/kg
+muA = 4.892E-9;                     % km^3/s^2
+rsa = [1.5E8 0 0]';                 % km
+phi0 = 1E14;                        % kg*km/s^2
+rho = 0.4;                          % coefficient of reflectivity
+Am = (1/62)*10^(-6);                % km^2/kg
 
-delTint = 60; % s
-tEnd = 72*60*60; % 72h -> s
+delTint = 60;                       % s
+tEnd = 72*60*60;                    % 72h -> s
 
-r0 = [0 -1 0]';
-rdot0 = [0 0 sqrt(muA/norm(r0))]';
+r0 = [0 -1 0]';                     % km
+rdot0 = [0 0 sqrt(muA/norm(r0))]';  % km/s
 state0 = [r0; rdot0];
 
 state = zeros(6,length(1:delTint:tEnd)+1);
