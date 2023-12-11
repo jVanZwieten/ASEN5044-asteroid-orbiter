@@ -11,9 +11,7 @@ classdef kalmanFilter
             xP1 = xM1 + K1*(y1 - H1*xM1);
             PP1 = (eye(n,n)-K1*H1)*PM1;
 
-%             H1
-%             PP1
-%             chol(PP1)
+            chol(PP1);  % Should crash if we do something dumb
         end
 
     end

@@ -35,7 +35,7 @@ NL_state(:,1) = state0;
 wTilde = noiseMaker(zeros(3,1),(sigW^2)*eye(3),length(NL_state))';
 gammaW = [zeros(3); eye(3)];
 W = sigW^2;
-Q = DTsys.noiseMat(W,delTobs);
+Q = 10*DTsys.noiseMat(W,delTobs);
 
 linear_state = zeros(6,length(1:delTobs:tEnd)+1);
 linear_state(:,1) = state0;
@@ -89,8 +89,8 @@ end
 
 
 linear_meas = [];
-P0 = [10*eye(3) zeros(3);
-      zeros(3) 0.0005*eye(3)];
+P0 = [10/1000*eye(3) zeros(3);
+      zeros(3) 0.5/1000/1000*eye(3)];
 xP(:,1) = state0;
 P_P(:,:,1) = P0;
 xM = [];
@@ -111,7 +111,7 @@ for j=1:(tEnd/delTobs)+1
     [A,B] = CTsys.dynMat(x,y,z,NL_r);
     [F,G] = DTsys.dynMat(A,B,delTobs);      
 
-    linear_state(:,j+1) = F*linear_state(:,j)+G*asrp;
+    linear_state(:,j+1) = F*linear_state(:,j)+G*asrp;%NL_state(:,NLind);
   
     r = linear_state(1:3,j);
 
@@ -138,10 +138,10 @@ for j=1:(tEnd/delTobs)+1
         if(~isempty(lmk))
             lpos = data.pos_lmks_A(:,l);
             lrot = Rna*lpos;
-            [H,M] = CTsys.measMat(NL_r,lrot,ic,jc,kc);
+            [H,M] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
             
-            linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
             [xP_temp,P_P_temp] = kalmanFilter.measUpd(length(A),xP_temp,lmk',P_P_temp,H,R);
+            linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
         end
 
     end
@@ -151,11 +151,11 @@ for j=1:(tEnd/delTobs)+1
 end
 
 % Psig(1,:) = P_P(1,1,:);
-
-
-% plot(1:(tEnd/delTobs)+2,xP(1,:))
+% 
+% figure()
+% plot(1:(tEnd/delTobs)+2,xP(1,:),'red')
 % hold on
-% plot(1:(tEnd/delTobs)+2,linear_state(1,:))
+% plot(1:(tEnd/delTobs)+2,linear_state(1,:),'blue')
 % plot(1:(tEnd/delTobs)+2,2*sqrt(Psig(1,:))+xP(1,:),'black --')
 % plot(1:(tEnd/delTobs)+2,-2*sqrt(Psig(1,:))+xP(1,:),'black --')
 
@@ -166,3 +166,12 @@ hold on
 plot(linear_meas(rows,3),linear_meas(rows,4),'red o')
 xlim([umin(1) umax(1)])
 ylim([umin(1) umax(1)])
+
+% plotter = [];
+% for i=1:length(NL_state)
+%     if(mod())
+% end
+
+% plot(1:length(linear_state),linear_state(1,:))
+% hold on
+% plot(1:length(NL_state),NL_state(1,:))
