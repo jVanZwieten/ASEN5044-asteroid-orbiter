@@ -18,14 +18,14 @@ classdef CTsys
             global fo
 
             C = zeros(2,6);
-            C(2,1) = ((fo*kc(1)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(1)/(kc'*(l-r)));
-            C(2,2) = ((fo*kc(2)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(2)/(kc'*(l-r)));
-            C(2,3) = ((fo*kc(3)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(3)/(kc'*(l-r)));
-            C(1,1) = ((fo*kc(1)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(1)/(kc'*(l-r)));
-            C(1,2) = ((fo*kc(2)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(2)/(kc'*(l-r)));
-            C(1,3) = ((fo*kc(3)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(3)/(kc'*(l-r)));
+            C(1,1) = ((fo*kc(1)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(1)/(kc'*(l-r)));
+            C(1,2) = ((fo*kc(2)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(2)/(kc'*(l-r)));
+            C(1,3) = ((fo*kc(3)*(ic'*(l-r)))/((kc'*(l-r))^2))-(fo*ic(3)/(kc'*(l-r)));
+            C(2,1) = ((fo*kc(1)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(1)/(kc'*(l-r)));
+            C(2,2) = ((fo*kc(2)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(2)/(kc'*(l-r)));
+            C(2,3) = ((fo*kc(3)*(jc'*(l-r)))/((kc'*(l-r))^2))-(fo*jc(3)/(kc'*(l-r)));
 
-            D = eye(2);
+            D = zeros(2);
         end
 
     end
