@@ -35,7 +35,7 @@ NL_state(:,1) = state0;
 wTilde = noiseMaker(zeros(3,1),(sigW^2)*eye(3),length(NL_state))';
 gammaW = [zeros(3); eye(3)];
 W = sigW^2;
-Q = 10*DTsys.noiseMat(W,delTobs);
+Q = DTsys.noiseMat(W,delTobs);
 
 linear_state = zeros(6,length(1:delTobs:tEnd)+1);
 linear_state(:,1) = state0;
