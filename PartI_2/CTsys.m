@@ -1,7 +1,7 @@
 classdef CTsys
     methods(Static)
 
-        function [A,B] = dynMat(x,y,z,r)            
+        function [A,B,Gamma] = dynMat(x,y,z,r)            
             global mu
 
             A = [zeros(3)  eye(3);
@@ -11,6 +11,8 @@ classdef CTsys
                          3*mu*z*x/r^5              3*mu*y*z/r^5            3*mu*z^2/r^5 - mu/r^3];
 
             B = [zeros(3,3); eye(3,3)];
+            Gamma = [zeros(3) zeros(3); % Gamma should be size nxn
+                     zeros(3) eye(3)];
         end
 
 
