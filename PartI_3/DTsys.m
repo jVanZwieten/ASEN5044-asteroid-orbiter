@@ -1,7 +1,7 @@
 classdef DTsys
     methods(Static)
 
-        function [F,G] = dynMat(A,B,delT)            
+        function [F,G,Omega] = dynMat(A,B,Gamma,delT)            
                  
             Ahat = [A B;
                     zeros(length(B(1,:)),length(A(1,:))),zeros(length(B(1,:)),length(B(1,:)))];
@@ -9,6 +9,9 @@ classdef DTsys
             
             F = expmA(1:length(A(:,1)),1:length(A(1,:)));
             G = expmA(1:length(A(:,1)),length(A(1,:))+1:length(A(1,:))+length(B(1,:)));
+            Omega = delT*Gamma;
+
+
         end
 
         function [Q] = noiseMat(W,delT)     %(A,Gamma,W,delT)
