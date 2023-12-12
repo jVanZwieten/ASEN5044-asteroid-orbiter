@@ -28,7 +28,7 @@ NL_state(:,1) = state0;
 
 % compute NL states at 60s time step
 for i=1:tEnd/delTint
-    NL_state(:,i+1) = rk4_state(NL_state(:,i),delTint);
+    NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delTint);
 end
 
 dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';

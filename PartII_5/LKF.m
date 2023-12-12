@@ -5,8 +5,8 @@ clear
 
 %addpath(genpath(fileparts(pwd)))
 
-data = load("C:\Users\jared\ASEN5044-asteroid-orbiter\orbitdetermination-finalproj_data_2023_11_14.mat");
-
+data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
+setGlobalVariables()
 global mu fo wA u0 umin umax sigW sigU
 mu = 4.892E-9;              % gravity parameter of asteroid
 fo = 2089.7959;             % Pixels
@@ -54,7 +54,7 @@ j = 1;
 
 
 for i=1:(tEnd/delTint)+1
-    NL_state(:,i+1) = rk4_state(NL_state(:,i),delTint); % + gammaW*wTilde(:,i);
+    NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delTint); % + gammaW*wTilde(:,i);
 
     time = (i-1)*delTint;
 
