@@ -1,3 +1,4 @@
+setGlobalVariables()
 global delT_integration delT_observation w_A X_0
 data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
 
@@ -19,7 +20,7 @@ for landmarkIndex = 1:size(data.pos_lmks_A, 2)
     end
 end
 
-X = propagateStateWithRk4(X_0, delT_integration, t_end);
+X = numerical.propagate(X_0, delT_integration, t_end);
 colors = jet(size(X, 2));
 for timeStep = 1:(size(X, 2) - 1)
     plot3(X(1, timeStep:(timeStep + 1)), X(2, timeStep:(timeStep + 1)), X(3, timeStep:(timeStep + 1)), ...

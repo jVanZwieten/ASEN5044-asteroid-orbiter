@@ -15,7 +15,7 @@ classdef measurement
         function YStack = Y_epoch(X, landmarkPositions, rotation_cameraToInertial)
             YStack = zeros(2*size(landmarkPositions, 1));
             for landmarkIndex = 1:size(landmarkPositions, 2)
-                YStack((landmarkIndex - 1):landmarkIndex, 1) = h(X, landmarkPositions(:, landmarkIndex), rotation_cameraToInertial)
+                YStack((landmarkIndex - 1):landmarkIndex, 1) = h(X, landmarkPositions(:, landmarkIndex), rotation_cameraToInertial);
             end
         end
 
