@@ -1,4 +1,4 @@
-global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 n sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v
+global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 n sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v p
 mu_A = 4.892E-9;                    % km^3/s^2
 T_rotationA = 4.296057;             % h
 w_A = 2*pi/(T_rotationA*60*60);     % rad/s
@@ -27,3 +27,4 @@ v_0 = 512;                          % pixels
 v_min = 0;                          % pixels
 v_max = 1024;                       % pixels
 sigma_v = 0.25;                     % pixels^2
+p = 2;
