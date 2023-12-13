@@ -19,7 +19,7 @@ sigU = 0.25;
 
 delTint = 60;               % s
 delTobs = 600;              % s
-tEnd = 120*60*60;           % 120h -> s
+tEnd = 72*60*60;           % 120h -> s
 
 
 
@@ -47,8 +47,8 @@ y_table = [];
 NL_y = nan(2,length(1:delTobs:tEnd)+1);
 
 vTilde = noiseMaker(zeros(2,1),(sigU^2)*eye(2),length(NL_y));
-V = (sigU^2)*eye(2);
-R = V/delTobs;
+R = (sigU^2)*eye(2); % TA posted on discussion board that R is already in DT
+%R = V/delTobs;
 
 j = 1;
 
@@ -93,20 +93,21 @@ end
 linear_meas = [];
 
 
-Q=Q;
+Qkf=2500*Q;
 Nsimruns = 50;
+NEES_samps=[];
 for k = 1:Nsimruns 
+
 xP = [];
 P_P = [];
 P_M = [];
 xM = [];
 NEES_hist=[];
 
-P0 = [5/1000*eye(3) zeros(3);
-      zeros(3) 0.5/1000/1000*eye(3)];
+P0 = [10/(1000)^2*eye(3) zeros(3);
+      zeros(3) 0.1/(1e6)^2*eye(3)];
 xP(:,1) = mvnrnd(zeros(6,1),P0);
 P_P(:,:,1) = P0;
-
 
     for j=1:(tEnd/delTobs)+1
     
@@ -125,15 +126,13 @@ P_P(:,:,1) = P0;
       
         r = linear_state(1:3,j);
     
-       
-    
-        [xM(:,end+1),P_M(:,:,end+1)] = kalmanFilter.timeUpd(xP(:,end),[0 0 0]',P_P(:,:,end),F,G,Q,Omega);
+        [xM(:,end+1),P_M(:,:,end+1)] = kalmanFilter.timeUpd(xP(:,end),[0 0 0]',P_P(:,:,end),F,G,Qkf,Omega);
         xP_temp = xM(:,end);
         P_P_temp = P_M(:,:,end);
     
         lmks = y_table(find(y_table(:,1)==time),2:4); 
     
-        if time <= y_table(end,1)
+        if time <= y_table(end,1) % stop processing measurements after 3days
             Rcn = data.R_CtoN(:,:,j);
             ic = Rcn(:,1);
             jc = Rcn(:,2);
@@ -151,7 +150,7 @@ P_P(:,:,1) = P0;
                     lpos = data.pos_lmks_A(:,l);
                     lrot = Rna*lpos;
                     [H,M] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
-                    lmk = [0 0] + noiseMaker([0 0],R,1);
+                    lmk = [0 0] + noiseMaker([0 0],2*R,1);
         
                     [xP_temp,P_P_temp] = kalmanFilter.measUpd(length(A),xP_temp,lmk',P_P_temp,H,R);
                     %linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
