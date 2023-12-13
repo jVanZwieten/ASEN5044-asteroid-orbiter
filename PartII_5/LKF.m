@@ -93,7 +93,7 @@ end
 linear_meas = [];
 
 
-Qkf=1000*Q;
+Qkf=(1e-4)*Q;
 Nsimruns = 50;
 NEES_samps=[];
 for k = 1:Nsimruns 
