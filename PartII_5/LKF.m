@@ -31,7 +31,9 @@ asrp = f.solarRadPress();
 asrp = asrp(4:6);
 
 NL_state = zeros(6,length(1:delTint:tEnd)+2);
-NL_state(:,1) = state0;
+NL_state(:,1) = state0+dx0;
+noisy_NL_state = zeros(6,length(1:delTint:tEnd)+2);
+noisy_NL_state(:,1) = state0+dx0;
 
 wTilde = noiseMaker(zeros(3,1),(sigW^2)*eye(3),length(NL_state))';
 gammaW = [zeros(3); eye(3)];
@@ -44,17 +46,19 @@ filt_total_state = [];
 
 meas = nan(2,length(1:delTobs:tEnd)+1);
 y_table = [];
+y_noiseless=[];
 NL_y = nan(2,length(1:delTobs:tEnd)+1);
+
 
 vTilde = noiseMaker(zeros(2,1),(sigU^2)*eye(2),length(NL_y));
 R = (sigU^2)*eye(2); % TA posted on discussion board that R is already in DT
 %R = V/delTobs;
-
 j = 1;
 
 
 for i=1:(tEnd/delTint)+1
-    NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delTint); % + gammaW*wTilde(:,i);
+    NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delTint);%+ gammaW*wTilde(:,i);
+    noisy_NL_state(:,i+1) = numerical.rk4_state(noisy_NL_state(:,i),delTint)+gammaW*wTilde(:,i);
 
     time = (i-1)*delTint;
 
@@ -74,12 +78,15 @@ for i=1:(tEnd/delTint)+1
         for l=1:50       
             lpos = data.pos_lmks_A(:,l);
             lrot = Rna*lpos;
-
-            u_y = ((fo*(lrot-r)'*ic)/((lrot-r)'*kc)) + u0(1);
-            v_y = ((fo*(lrot-r)'*jc)/((lrot-r)'*kc)) + u0(2);
-
+            meas_noise = noiseMaker(zeros(2,1),R,1);
+            u_noiseless = ((fo*(lrot-r)'*ic)/((lrot-r)'*kc)) + u0(1);
+            v_noiseless = ((fo*(lrot-r)'*jc)/((lrot-r)'*kc)) + u0(2);
+            u_y = u_noiseless+meas_noise(1);
+            v_y = v_noiseless+meas_noise(1);
+            
             if(isVisible([u_y; v_y],lrot,r,kc))
                 y_table(end+1,:) = [time l u_y v_y];
+                y_noiseless(end+1,:) = [time l u_noiseless v_noiseless];
             end
         end
 
@@ -93,9 +100,11 @@ end
 linear_meas = [];
 
 
-Qkf=(1e-4)*Q;
-Nsimruns = 50;
+Qkf=Q;
+Qkf(4:6,4:6) = 1e-21*eye(3); % only changes velocity covariance
+Nsimruns = 10;
 NEES_samps=[];
+
 for k = 1:Nsimruns 
 
 xP = [];
@@ -103,10 +112,11 @@ P_P = [];
 P_M = [];
 xM = [];
 NEES_hist=[];
+filt_total_state=[];
 
-P0 = [10/(1000)^2*eye(3) zeros(3);
-      zeros(3) 0.1/(1e6)^2*eye(3)];
-xP(:,1) = mvnrnd(zeros(6,1),P0);
+P0 = [0.01/(1000)^2*eye(3) zeros(3);
+      zeros(3) 0.001/(1e6)^2*eye(3)];
+xP(:,1) = dx0;
 P_P(:,:,1) = P0;
 
     for j=1:(tEnd/delTobs)+1
@@ -150,7 +160,7 @@ P_P(:,:,1) = P0;
                     lpos = data.pos_lmks_A(:,l);
                     lrot = Rna*lpos;
                     [H,M] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
-                    lmk = [0 0] + noiseMaker([0 0],2*R,1);
+                    lmk = [0 0] + noiseMaker([0 0],R,1);
         
                     [xP_temp,P_P_temp] = kalmanFilter.measUpd(length(A),xP_temp,lmk',P_P_temp,H,R);
                     %linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
@@ -170,8 +180,8 @@ P_P(:,:,1) = P0;
 end
 
 % Psig = P_P(1,1,:);
-% time = (0:delTobs:tEnd)/3600;
-% NLtime = (0:delTint:(tEnd+60))/3600;
+time = (0:delTobs:tEnd)/3600;
+NLtime = (0:delTint:(tEnd+60))/3600;
 % 
 % figure()
 % plot(time,filt_total_state(1,:),'red')
@@ -181,9 +191,99 @@ end
 % plot(time,2*sqrt(Psig(1,1:end-1))+filt_total_state(1,:),'black --')
 % plot(time,-2*sqrt(Psig(1,1:end-1))+filt_total_state(1,:),'black --')
 
-% figure()
-% title('Difference between filter and NL state')
-% plot(time,NL_state(1,1:10:end-1)-filt_total_state(1,:))
+
+% plot typical noisy traj vs noiseless traj
+figure()
+subplot(611)
+sgtitle('Typical Noisy Truth Trajectory')
+plot(NLtime,NL_state(1,:),NLtime,noisy_NL_state(1,:))
+ylabel('x (km)')
+legend('Noiseless','Noisy')
+
+subplot(612)
+plot(NLtime,NL_state(2,:),NLtime,noisy_NL_state(2,:))
+ylabel('y (km)')
+
+subplot(613)
+plot(NLtime,NL_state(3,:),NLtime,noisy_NL_state(3,:))
+ylabel('z (km)')
+
+subplot(614)
+plot(NLtime,NL_state(4,:),NLtime,noisy_NL_state(4,:))
+ylabel('xdot (km/s)')
+
+subplot(615)
+plot(NLtime,NL_state(5,:),NLtime,noisy_NL_state(5,:))
+ylabel('ydot (km/s)')
+
+subplot(616)
+plot(NLtime,NL_state(6,:),NLtime,noisy_NL_state(6,:))
+ylabel('zdot (km/s)')
+xlabel('Time (hours)')
+
+% plot noisy simulated data
+figure()
+for ii = 1:5
+    meastime = y_table(find(y_table(:,2)==ii),1);
+    noisy_u = y_table(find(y_table(:,2)==ii),3);
+    noisy_v = y_table(find(y_table(:,2)==ii),4);
+    noiseless_u = y_noiseless(find(y_noiseless(:,2)==ii),3);
+    noiseless_v = y_noiseless(find(y_noiseless(:,2)==ii),4);
+    plot(meastime/3600,noisy_u,'x')
+    hold on
+    plot(meastime/3600,noiseless_u,'o')
+end
+
+% plot state estimation errors
+state_est_error = filt_total_state - NL_state(:,1:10:end);
+
+figure()
+sgtitle('Position state estimation error')
+subplot(311)
+plot(time,state_est_error(1,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
+%ylim([-1e-4 1e-4])
+
+subplot(312)
+plot(time,state_est_error(2,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
+%ylim([-1e-3 1e-3])
+
+subplot(313)
+plot(time,state_est_error(3,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
+%ylim([-1e-3 1e-3])
+
+figure()
+sgtitle('Velocity state estimation error')
+subplot(311)
+plot(time,state_est_error(4,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
+%ylim([-1e-4 1e-4])
+
+subplot(312)
+plot(time,state_est_error(5,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
+%ylim([-1e-3 1e-3])
+
+subplot(313)
+plot(time,state_est_error(6,:))
+hold on
+plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
+plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
+%ylim([-1e-3 1e-3])
+
+% plot(NLtime,NL_state(1,:),time,filt_total_state(1,:))
 % rows = 1:length(y_table);
 % 
 % figure()
