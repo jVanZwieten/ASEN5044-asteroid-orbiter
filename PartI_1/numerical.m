@@ -6,7 +6,7 @@ classdef numerical
             X = zeros(size(X0, 1), length(1:dT:t_end) + 1);
             X(:, 1) = X0;
         
-            for k=1:t_end/dT
+            for k=1:t_end/dT+1
                 X(:, k+1) = numerical.rk4_state(X(:, k), dT);
             end
         end
