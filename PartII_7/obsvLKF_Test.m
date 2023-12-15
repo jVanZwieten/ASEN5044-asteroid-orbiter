@@ -26,7 +26,7 @@ y_table = data.y_table;
 % :::::Calculate filtered measurements and NEES test:::::
 
 Qkf=Q;
-Qkf(4:6,4:6) = 1e-21*eye(3); % only changes velocity covariance
+Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
 
 [xP,P_P,filt_total_state,~] = LinearizedKalmanFilter.LKF(NL_state,dx0,y_table,data,Qkf);
 

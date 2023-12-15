@@ -30,15 +30,18 @@ Q = DTsys.noiseMat(W,delT_observation);
 
 % :::::Calculate filtered measurements and NEES test:::::
 
-Qkf=Q;
-Qkf(4:6,4:6) = 1e-21*eye(3); % only changes velocity covariance
+Qkf=Q;  %cov(noisy_NL_state'-NL_state');
+% Qkf(1:3,1:3) = 1e40*eye(3);
+Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
 Nsimruns = 10;
 nMeas = length(1:delT_observation:t_end)+1;
 NEES_samps = zeros(Nsimruns,nMeas);
+NIS_samps = zeros(Nsimruns,nMeas);
 
 for k = 1:Nsimruns 
-    [xP,P_P,filt_total_state,NEES_hist] = LinearizedKalmanFilter.LKF(NL_state,dx0,y_table,data,Qkf);
+    [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LinearizedKalmanFilter.LKF(noisy_NL_state,dx0,y_table,data,Qkf);
     NEES_samps(k,:)=NEES_hist;
+    NIS_samps(k,:)=NIS_hist;
 end
 
 
@@ -101,7 +104,7 @@ for ii = 1:5
 end
 
 % plot state estimation errors
-state_est_error = filt_total_state - NL_state(:,1:10:end);
+state_est_error = filt_total_state - noisy_NL_state(:,1:10:end);
 
 figure()
 sgtitle('Position state estimation error')
@@ -184,3 +187,23 @@ ylabel('NEES statistic, $\bar{\epsilon}_x$','Interpreter','latex', 'FontSize',14
 xlabel('time step, k','FontSize',14)
 title('NEES Estimation Results','FontSize',14)
 legend('NEES @ time k', 'r_1 bound', 'r_2 bound'),grid on
+ylim([r1x-2 r2x+2])
+
+
+%%DO NIS TEST:
+epsNISbar = mean(NIS_samps,1);
+alphaNIS = 0.05; 
+Nny = Nsimruns*3;
+%%compute intervals:
+r1y = chi2inv(alphaNIS/2, Nny )./ Nsimruns
+r2y = chi2inv(1-alphaNIS/2, Nny )./ Nsimruns
+
+figure()
+plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
+plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
+plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
+ylabel('NIS statistic, $\bar{\epsilon}_y$','Interpreter','latex','FontSize',14)
+xlabel('time step, k','FontSize',14)
+title('NIS Estimation Results','FontSize',14)
+legend('NIS @ time k', 'r_1 bound', 'r_2 bound'),grid on
+ylim([r1y-2 r2y+2])
