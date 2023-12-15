@@ -15,8 +15,8 @@ t_end = 72*60*60;                       % 72h -> s
 r_0 = [0 -1 0]';                        % km
 rDot_0 = [0 0 sqrt(mu_A/norm(r_0))]';   % km/s
 X_0 = [r_0; rDot_0];                    % initial state
-P_0 = [(10/1000)^2*eye(3) zeros(3)      % initial state covarience
-      zeros(3) (0.5/1000/1000)^2*eye(3)];
+P_0 = [0.01/(1000)^2*eye(3) zeros(3)      % initial state covarience
+      zeros(3) 0.001/(1e6)^2*eye(3)];
 sigma_w = 1e-9;                         % km/s^2, process noise standard deviation
 n = size(X_0, 1);
 
