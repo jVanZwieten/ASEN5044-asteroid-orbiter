@@ -1,7 +1,7 @@
 classdef ExtendedKalmanFilter
     methods(Static)
-        function [X, P] = Filter(X_initial, P_initial, Q, Y, R, dT, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial)
-            global n
+        function [X, P, NEES_hist, NIS_hist] = Filter(X_initial, P_initial, Q, Y, R, dT, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial)
+            setGlobalVariables()
             assert(size(X_initial, 1) == n && size(X_initial, 2) == 1)
             assert(size(P_initial, 1) == n && size(P_initial, 2) == n && size(P_initial, 3) == 1)
 
@@ -11,6 +11,10 @@ classdef ExtendedKalmanFilter
             X(:, 1) = X_initial; % X_0
             P = zeros(n, n, totalSteps + 1);
             P(:, :, 1) = P_initial;
+
+            nMeas = length(1:delT_observation:t_end)+1;
+            NEES_hist = zeros(1,nMeas);
+            NIS_hist = zeros(1,nMeas);
 
             omegaTilde_k = dT*CTsys.Gamma;
             omegaQomega = omegaTilde_k*Q*omegaTilde_k';
@@ -22,7 +26,9 @@ classdef ExtendedKalmanFilter
                 Y_epoch = reshape(Y_epoch(2:3, :), 1, [])';
                 rotation_cameraToInertial = rotations_cameraToInertial(:, :, k - 1);
 
-                [X(:, k), P(:, :, k)] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), omegaQomega, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
+                [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), omegaQomega, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
+                NEES_hist(k-1) = NEES;
+                NIS_hist(k-1) = NIS;
             end
         end
         
@@ -35,7 +41,7 @@ classdef ExtendedKalmanFilter
             end
         end
 
-        function [Xestimate_k, P_k] = propagateExtendedKalmanFilter(X_kPrevious, P_kPrevious, omegaQomega, dT, Y_k, R, landmarkPositions, rotation_cameraToInertial)
+        function [Xestimate_k, P_k, NEES_k, NIS_k] = propagateExtendedKalmanFilter(X_kPrevious, P_kPrevious, omegaQomega, dT, Y_k, R, landmarkPositions, rotation_cameraToInertial)
             global n
 
             XinitialEstimate_k = numerical.rk4_state(X_kPrevious, dT);
@@ -52,6 +58,11 @@ classdef ExtendedKalmanFilter
 
             Xestimate_k = XinitialEstimate_k + K_k*error_k;
             P_k = (eye(n) - K_k*Htilde_k)*P_kInitial;
+
+            ex = -Xestimate_k;
+            ey = error_k;
+            NEES_k = ex'*pinv(P_k)*ex;
+            NIS_k = ey'*pinv(Htilde_k*P_kInitial*Htilde_k'+R_k)*ey;
         end
         
         function Htilde_k = Htilde(X_estimate, landmarkPositions, rotation_cameraToInertial)
