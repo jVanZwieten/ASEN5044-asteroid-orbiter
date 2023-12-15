@@ -1,16 +1,18 @@
 classdef f
     methods(Static)
 
-        function a2B = twoBody(state)
-            global mu_A
-            
+        function a2B = twoBody(state,gammaW)
+            global mu_A sigma_w
+
+            wTilde = noiseMaker(zeros(3,1),(sigma_w^2)*eye(3),1)';
             r = state(1:3);
             rdot = state(4:6);
             a2B = zeros(6,1);
 
             a2B(1:3) = rdot;
             a2B(4:6) = -(mu_A/(norm(r))^3)*r;
-
+            a2B(1:6) = a2B + gammaW*wTilde;
+            
          end
 
         function aSRP = solarRadPress()
