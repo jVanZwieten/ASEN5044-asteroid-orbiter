@@ -10,7 +10,7 @@ setGlobalVariables()
 
 
 
-dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
+dx0 = [1e-7 1e-7 1e-7 1e-9 1e-9 1e-9]';
 asrp = f.solarRadPress();
 asrp = asrp(4:6);
 
@@ -24,22 +24,23 @@ Q = DTsys.noiseMat(W,delT_observation);
 % :::::Define Nonlinear matrices:::::
 
 [NL_state,noisy_NL_state] = LinearizedKalmanFilter.genNLState(dx0,gammaW);
-[y_noiseless,y_table] = LinearizedKalmanFilter.genNLMeas(NL_state,data);
+[y_noiseless,y_table,y_actual_noisy] = LinearizedKalmanFilter.genNLMeas(NL_state,noisy_NL_state,data);
+%[y_actual_noiseless,y_actual_noisy]=LinearizedKalmanFilter.genNLMeas(noisy_NL_state,data);
 
 
 
 % :::::Calculate filtered measurements and NEES test:::::
 
 Qkf=Q;  %cov(noisy_NL_state'-NL_state');
-% Qkf(1:3,1:3) = 1e40*eye(3);
-Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
+%Qkf(1:3,1:3) = 1e3*eye(3);
+%Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
 Nsimruns = 10;
 nMeas = length(1:delT_observation:t_end)+1;
 NEES_samps = zeros(Nsimruns,nMeas);
 NIS_samps = zeros(Nsimruns,nMeas);
 
 for k = 1:Nsimruns 
-    [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LinearizedKalmanFilter.LKF(noisy_NL_state,dx0,y_table,data,Qkf);
+    [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LinearizedKalmanFilter.LKF(NL_state,noisy_NL_state,dx0,y_table,y_actual_noisy,data,Qkf);
     NEES_samps(k,:)=NEES_hist;
     NIS_samps(k,:)=NIS_hist;
 end
@@ -93,19 +94,21 @@ xlabel('Time (hours)')
 % plot noisy simulated data
 figure()
 for ii = 1:5
-    meastime = y_table(find(y_table(:,2)==ii),1);
-    noisy_u = y_table(find(y_table(:,2)==ii),3);
-    noisy_v = y_table(find(y_table(:,2)==ii),4);
+    meastime = y_actual_noisy(find(y_actual_noisy(:,2)==ii),1);
+    noisy_u = y_actual_noisy(find(y_actual_noisy(:,2)==ii),3);
+    noisy_v = y_actual_noisy(find(y_actual_noisy(:,2)==ii),4);
     noiseless_u = y_noiseless(find(y_noiseless(:,2)==ii),3);
     noiseless_v = y_noiseless(find(y_noiseless(:,2)==ii),4);
     plot(meastime/3600,noisy_u,'x')
     hold on
     plot(meastime/3600,noiseless_u,'o')
 end
+title('Simulated NL Measurements (lmks 1-5)')
+legend('Noisy','Noiseless')
+
 
 % plot state estimation errors
-state_est_error = filt_total_state - noisy_NL_state(:,1:10:end);
-
+state_est_error = filt_total_state - NL_state(:,1:10:end);
 figure()
 sgtitle('Position state estimation error')
 subplot(311)
@@ -113,6 +116,7 @@ plot(time,state_est_error(1,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -120,6 +124,7 @@ plot(time,state_est_error(2,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -127,6 +132,7 @@ plot(time,state_est_error(3,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 figure()
@@ -136,6 +142,7 @@ plot(time,state_est_error(4,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -143,6 +150,7 @@ plot(time,state_est_error(5,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -150,6 +158,7 @@ plot(time,state_est_error(6,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 % plot(NLtime,NL_state(1,:),time,filt_total_state(1,:))
@@ -174,7 +183,7 @@ plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
 %%DO NEES TEST:
 epsNEESbar = mean(NEES_samps,1);
 alphaNEES = 0.05; %%significance level
-Nnx = k*n;
+Nnx = Nsimruns*6;
 %%compute intervals:
 r1x = chi2inv(alphaNEES/2, Nnx )./ Nsimruns
 r2x = chi2inv(1-alphaNEES/2, Nnx )./ Nsimruns
@@ -187,13 +196,13 @@ ylabel('NEES statistic, $\bar{\epsilon}_x$','Interpreter','latex', 'FontSize',14
 xlabel('time step, k','FontSize',14)
 title('NEES Estimation Results','FontSize',14)
 legend('NEES @ time k', 'r_1 bound', 'r_2 bound'),grid on
-ylim([r1x-2 r2x+2])
+%ylim([r1x-2 r2x+2])
 
 
 %%DO NIS TEST:
 epsNISbar = mean(NIS_samps,1);
 alphaNIS = 0.05; 
-Nny = Nsimruns*3;
+Nny = Nsimruns*2;
 %%compute intervals:
 r1y = chi2inv(alphaNIS/2, Nny )./ Nsimruns
 r2y = chi2inv(1-alphaNIS/2, Nny )./ Nsimruns
@@ -206,4 +215,4 @@ ylabel('NIS statistic, $\bar{\epsilon}_y$','Interpreter','latex','FontSize',14)
 xlabel('time step, k','FontSize',14)
 title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound'),grid on
-ylim([r1y-2 r2y+2])
+%ylim([r1y-2 r2y+2])
