@@ -4,8 +4,8 @@ close all
 format longg
 setGlobalVariables()
 
-global X_0 XLabels XUnits P_0 delT_integration delT_observation t_end w_A p sigma_w sigma_u
 rng(117)
+
 
 % no noise test
 data = load("orbitdetermination-finalproj_data_2023_11_14.mat");

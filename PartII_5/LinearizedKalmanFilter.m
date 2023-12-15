@@ -132,8 +132,8 @@ classdef LinearizedKalmanFilter
                 xP(:,j+1) = xP_temp;
                 P_P(:,:,j+1) = P_P_temp;
             
-                filt_total_state(:,j) = NL_state(:,NLind)+xP(:,j+1);
-                NEES_hist(j) = (xP(:,j+1))'*pinv(P_P(:,:,j+1))*(xP(:,j+1));
+                filt_total_state(:,j) = NL_state(:,NLind)+xP(:,j);
+                NEES_hist(j) = (xP(:,j))'*pinv(P_P(:,:,j))*(xP(:,j));
             end
         end
         
