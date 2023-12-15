@@ -21,8 +21,9 @@ classdef measurement
             end
         end
 
-        function Y = SimulateYData(X, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial, R, dT)
+        function [Y, Y_noisy] = SimulateYData(X, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial, R, dT)
             Y = zeros(4, size(landmarkPositionsThroughTime_inertial, 2));
+            Y_noisy = Y;
             t_end = landmarkPositionsThroughTime_inertial(1, end);
 
             timeSteps = t_end/dT + 1; % +1 to account for t = 0
@@ -51,7 +52,7 @@ classdef measurement
             Y = Y(:, 1:i);
 
             signalNoise = mvnrnd([0 0], R, size(Y, 2))';
-            Y = Y + [zeros(2, size(Y, 2)); signalNoise];
+            Y_noisy = Y + [zeros(2, size(Y, 2)); signalNoise];
         end
     end
 end
