@@ -19,7 +19,7 @@ XLabels = ["x", "y", "z", "v_x", "v_y", "v_z"];
 XUnits = ["km", "km", "km", "km/s", "km/s", "km/s"];
 P_0 = [0.01/(1000)^2*eye(3) zeros(3)      % initial state covarience
       zeros(3) 0.001/(1e6)^2*eye(3)];
-sigma_w = 1e-9;                         % km/s^2, process noise standard deviation
+sigma_w = 1e-12;                         % km/s^2, process noise standard deviation
 n = size(X_0, 1);
 
 f_camera = 2089.7959;                   % pixels, camera focal length
