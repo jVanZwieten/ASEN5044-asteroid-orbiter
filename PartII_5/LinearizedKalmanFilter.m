@@ -68,7 +68,7 @@ classdef LinearizedKalmanFilter
         end
 
 
-        function [xP,P_P,filt_total_state,NEES_hist] = LKF(NL_state,dx0,y_table,data,Qkf)
+        function [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LKF(NL_state,dx0,y_table,data,Qkf)
             setGlobalVariables()
 
             nMeas = length(1:delT_observation:t_end)+1;
@@ -84,6 +84,7 @@ classdef LinearizedKalmanFilter
 
             filt_total_state = zeros(n,nMeas);   
             NEES_hist = zeros(1,nMeas);
+            NIS_hist = zeros(1,nMeas);
 
             for j=1:(t_end/delT_observation)+1
                 time = (j-1)*delT_observation;
@@ -100,6 +101,7 @@ classdef LinearizedKalmanFilter
                 [xM(:,j),P_M(:,:,j)] = LinearizedKalmanFilter.timeUpd(xP(:,j),[0 0 0]',P_P(:,:,j),F,G,Qkf,Omega);
                 xP_temp = xM(:,j);
                 P_P_temp = P_M(:,:,j);
+                H_temp = [];
             
                 lmks = y_table(find(y_table(:,1)==time),2:4); 
             
@@ -124,16 +126,23 @@ classdef LinearizedKalmanFilter
                             lmk = [0 0] + noiseMaker([0 0],R,1);
                 
                             [xP_temp,P_P_temp] = LinearizedKalmanFilter.measUpd(n,xP_temp,lmk',P_P_temp,H,R);
-                            %linear_meas(end+1,:) = [time l (H*linear_state(:,j))'];
+                            H_temp = [H_temp; H];
                         end
                 
                     end
                 end
                 xP(:,j+1) = xP_temp;
                 P_P(:,:,j+1) = P_P_temp;
-            
+
+                R_temp = kron(eye(length(H_temp)/2),R);
+
                 filt_total_state(:,j) = NL_state(:,NLind)+xP(:,j);
-                NEES_hist(j) = (xP(:,j))'*pinv(P_P(:,:,j))*(xP(:,j));
+
+                ex = -xP(:,j);
+                ey = reshape(lmks(:,2:3)',[],1) - H_temp*(NL_state(:,NLind)+xM(:,j));
+
+                NEES_hist(j) = ex'*pinv(P_P(:,:,j))*ex;
+                NIS_hist(j) = ey'*pinv(H_temp*P_M(:,:,j)*H_temp'+R_temp)*ey;
             end
         end
         
