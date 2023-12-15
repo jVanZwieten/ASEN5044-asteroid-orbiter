@@ -1,5 +1,5 @@
 function landmarkPositions = propagateLandmarksInInertialFrame(landmarkPositions_initial, delT, t_end, w_A)
-    totalSteps = t_end/delT;
+    totalSteps = t_end/delT + 1; % +1 to account for t = 0
     numberLandmarks = size(landmarkPositions_initial, 2);
 
     landmarkPositions = zeros(5, numberLandmarks*totalSteps); % this does not include initial state; assuming t = 0s has propagated 1 step

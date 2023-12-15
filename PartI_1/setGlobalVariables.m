@@ -1,4 +1,4 @@
-global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 P_0 n sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v p
+global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 XLabels XUnits P_0 n sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v p
 mu_A = 4.892E-9;                        % km^3/s^2
 T_rotationA = 4.296057;                 % h
 w_A = 2*pi/(T_rotationA*60*60);         % rad/s
@@ -15,6 +15,8 @@ t_end = 72*60*60;                       % 72h -> s
 r_0 = [0 -1 0]';                        % km
 rDot_0 = [0 0 sqrt(mu_A/norm(r_0))]';   % km/s
 X_0 = [r_0; rDot_0];                    % initial state
+XLabels = ["x", "y", "z", "v_x", "v_y", "v_z"];
+XUnits = ["km", "km", "km", "km/s", "km/s", "km/s"];
 P_0 = [(10/1000)^2*eye(3) zeros(3)      % initial state covarience
       zeros(3) (0.5/1000/1000)^2*eye(3)];
 sigma_w = 1e-9;                         % km/s^2, process noise standard deviation

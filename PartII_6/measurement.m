@@ -24,7 +24,7 @@ classdef measurement
         function Y = SimulateYData(X, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial, R, dT)
             Y = zeros(4, size(landmarkPositionsThroughTime_inertial, 2));
             t_end = landmarkPositionsThroughTime_inertial(1, end);
-            timeSteps = t_end/dT;
+            timeSteps = t_end/dT + 1; % +1 to account for t = 0
 
             i = 0;
             for k = 1:timeSteps

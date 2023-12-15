@@ -5,7 +5,7 @@ classdef ExtendedKalmanFilter
             assert(size(X_initial, 1) == n && size(X_initial, 2) == 1)
             assert(size(P_initial, 1) == n && size(P_initial, 2) == n && size(P_initial, 3) == 1)
 
-            totalSteps = Y(1, end)/dT;
+            totalSteps = Y(1, end)/dT + 1; % +1 accounts for t=0
 
             X = zeros(n, totalSteps + 1);
             X(:, 1) = X_initial; % X_0
