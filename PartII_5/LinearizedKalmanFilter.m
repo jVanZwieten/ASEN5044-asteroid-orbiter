@@ -7,26 +7,28 @@ classdef LinearizedKalmanFilter
             setGlobalVariables()
             
             NL_state = zeros(6,length(1:delT_integration:t_end)+2);
-            NL_state(:,1) = X_0+dx0;
-            noisy_NL_state = NL_state;
+            noisy_NL_state = zeros(6,length(1:delT_integration:t_end)+2);
+            NL_state(:,1) = X_0; %+dx0;
+            noisy_NL_state(:,1) = NL_state(:,1)+dx0;
 
             for i=1:(t_end/delT_integration)+1
-                wTilde = noiseMaker(zeros(3,1),(sigma_w^2)*eye(3),1)';
-
-                NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delT_integration);%+ gammaW*wTilde(:,i);
-                noisy_NL_state(:,i+1) = numerical.rk4_state(noisy_NL_state(:,i),delT_integration) + gammaW*wTilde;
+                NL_state(:,i+1) = numerical.rk4_state(NL_state(:,i),delT_integration,zeros(6,3));
+                noisy_NL_state(:,i+1) = numerical.rk4_state(noisy_NL_state(:,i),delT_integration,gammaW);% + gammaW*wTilde;
+                %propagated_noisy_state(:,i+1) = NL_state(:,i+1) + gammaW*wTilde;
             end
         end
 
 
 
-        function [y_noiseless,y_table] = genNLMeas(NL_state,data)
+        function [y_noiseless,y_table,y_actual_noisy] = genNLMeas(NL_state,noisy_NL_state,data)
             setGlobalVariables()
 
             R = (sigma_u^2)*eye(2);
 
             y_table = [];
             y_noiseless=[];
+            y_actual = [];
+            y_actual_noisy = [];
 
             for j=1:(t_end/delT_observation)+1
                 time = (j-1)*delT_observation;
@@ -35,6 +37,9 @@ classdef LinearizedKalmanFilter
                     NLind = ((j-1)*10)+1;
 
                     r = NL_state(1:3,NLind);
+
+                    %added
+                    r_actual = noisy_NL_state(1:3,NLind);
 
                     Rcn = data.R_CtoN(:,:,j);
                     ic = Rcn(:,1);
@@ -50,17 +55,25 @@ classdef LinearizedKalmanFilter
                         lpos = data.pos_lmks_A(:,l);
                         lrot = Rna*lpos;
 
-                        meas_noise = noiseMaker(zeros(2,1),R,1);
+                        meas_noise = noiseMaker(zeros(2,1),R,2);
 
                         u_noiseless = ((f_camera*(lrot-r)'*ic)/((lrot-r)'*kc)) + u_0;
                         v_noiseless = ((f_camera*(lrot-r)'*jc)/((lrot-r)'*kc)) + v_0;
 
+                        u_actual= ((f_camera*(lrot-r_actual)'*ic)/((lrot-r_actual)'*kc)) + u_0;
+                        v_actual = ((f_camera*(lrot-r_actual)'*jc)/((lrot-r_actual)'*kc)) + v_0;
+
                         u_y = u_noiseless+meas_noise(1);
-                        v_y = v_noiseless+meas_noise(1);
+                        v_y = v_noiseless+meas_noise(2);
+
+                        u_actual_noisy = u_actual+meas_noise(3);
+                        v_actual_noisy = v_actual+meas_noise(4);
                         
-                        if(isVisible([u_y; v_y],lrot,r,kc))
-                            y_table(end+1,:) = [time l u_y v_y];
+                        % check visibilty for NOMINAL orbit
+                        if(isVisible([u_noiseless; v_noiseless],lrot,r,kc))
+                            y_table(end+1,:) = [time l u_noiseless v_noiseless];
                             y_noiseless(end+1,:) = [time l u_noiseless v_noiseless];
+                            y_actual_noisy(end+1,:) = [time l u_actual_noisy v_actual_noisy];
                         end
                     end
                 end
@@ -68,7 +81,7 @@ classdef LinearizedKalmanFilter
         end
 
 
-        function [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LKF(NL_state,dx0,y_table,data,Qkf)
+        function [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LKF(NL_state,noisy_NL_state,dx0,y_table,y_actual_noisy,data,Qkf)
             setGlobalVariables()
 
             nMeas = length(1:delT_observation:t_end)+1;
@@ -104,6 +117,7 @@ classdef LinearizedKalmanFilter
                 H_temp = [];
             
                 lmks = y_table(find(y_table(:,1)==time),2:4); 
+                actual_lmks = y_actual_noisy(find(y_actual_noisy(:,1)==time),2:4);
             
                 if time <= y_table(end,1) % stop processing measurements after 3days
                     Rcn = data.R_CtoN(:,:,j);
@@ -117,18 +131,18 @@ classdef LinearizedKalmanFilter
                            0 0 1];
                     for l=1:50
                         lmk = lmks(find(lmks(:,1)==l),2:3);
+                        actual_lmk = actual_lmks(find(actual_lmks(:,1)==l),2:3);
                         
                 
                         if(~isempty(lmk))
                             lpos = data.pos_lmks_A(:,l);
                             lrot = Rna*lpos;
                             [H,~] = CTsys.measMat(NL_state(1:3,NLind),lrot,ic,jc,kc);
-                            lmk = [0 0] + noiseMaker([0 0],R,1);
+                            dy = (actual_lmk - lmk)';
                 
-                            [xP_temp,P_P_temp] = LinearizedKalmanFilter.measUpd(n,xP_temp,lmk',P_P_temp,H,R);
+                            [xP_temp,P_P_temp] = LinearizedKalmanFilter.measUpd(n,xP_temp,dy,P_P_temp,H,R);
                             H_temp = [H_temp; H];
                         end
-                
                     end
                 end
                 xP(:,j+1) = xP_temp;
@@ -138,11 +152,11 @@ classdef LinearizedKalmanFilter
 
                 filt_total_state(:,j) = NL_state(:,NLind)+xP(:,j);
 
-                ex = -xP(:,j);
-                ey = reshape(lmks(:,2:3)',[],1) - H_temp*(NL_state(:,NLind)+xM(:,j));
+                ex = (noisy_NL_state(:,NLind) - filt_total_state(:,j));%-xP(:,j);
+                ey = reshape(actual_lmks(:,2:3)',[],1) - (reshape(lmks(:,2:3)',[],1)+H_temp*(xM(:,j)));
 
                 NEES_hist(j) = ex'*pinv(P_P(:,:,j))*ex;
-                NIS_hist(j) = ey'*pinv(H_temp*P_M(:,:,j)*H_temp'+R_temp)*ey;
+                NIS_hist(j) = (ey'*pinv(H_temp*P_M(:,:,j)*H_temp'+R_temp)*ey)/length(lmks);
             end
         end
         
