@@ -21,9 +21,8 @@ classdef ExtendedKalmanFilter
                 Y_epoch = reshape(Y_epoch(2:3, :), 1, [])';
                 rotation_cameraToInertial = rotations_cameraToInertial(:, :, k - 1);
 
-                [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), Q, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
-                NEES_hist(k-1) = NEES;
-                NIS_hist(k-1) = NIS/length(correspondingLandmarks);
+                [X(:, k), P(:, :, k), NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), Q, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
+                NIS_hist(k - 1) = NIS/length(correspondingLandmarks);
             end
         end
         

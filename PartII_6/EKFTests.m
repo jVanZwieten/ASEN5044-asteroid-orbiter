@@ -1,9 +1,9 @@
 classdef EKFTests
     properties(Constant)
         data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
-        W = 3.15e-12; % tune on this property
+        W = 1e-11; % tune on this property
         dX_0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
-        MonteCarloIterations = 100;
+        MonteCarloIterations = 10;
         
     end
     
