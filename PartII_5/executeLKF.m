@@ -10,7 +10,7 @@ setGlobalVariables()
 
 
 
-dx0 = [1e-7 1e-7 1e-7 1e-9 1e-9 1e-9]';
+dx0 = [1e-7 1e-7 1e-7 1e-9 1e-9 1e-9]';    %[1e-7 1e-7 1e-7 1e-9 1e-9 1e-9]'; 
 asrp = f.solarRadPress();
 asrp = asrp(4:6);
 
@@ -68,45 +68,55 @@ NLtime = (0:delT_integration:(t_end+60))/3600;
 figure()
 subplot(611)
 sgtitle('Typical Noisy Truth Trajectory')
-plot(NLtime,NL_state(1,:),NLtime,noisy_NL_state(1,:))
+plot(NLtime,NL_state(1,:),NLtime,noisy_NL_state(1,:),'--')
 ylabel('x (km)')
 legend('Noiseless','Noisy')
 
 subplot(612)
-plot(NLtime,NL_state(2,:),NLtime,noisy_NL_state(2,:))
+plot(NLtime,NL_state(2,:),NLtime,noisy_NL_state(2,:),'--')
 ylabel('y (km)')
 
 subplot(613)
-plot(NLtime,NL_state(3,:),NLtime,noisy_NL_state(3,:))
+plot(NLtime,NL_state(3,:),NLtime,noisy_NL_state(3,:),'--')
 ylabel('z (km)')
 
 subplot(614)
-plot(NLtime,NL_state(4,:),NLtime,noisy_NL_state(4,:))
+plot(NLtime,NL_state(4,:),NLtime,noisy_NL_state(4,:),'--')
 ylabel('xdot (km/s)')
 
 subplot(615)
-plot(NLtime,NL_state(5,:),NLtime,noisy_NL_state(5,:))
+plot(NLtime,NL_state(5,:),NLtime,noisy_NL_state(5,:),'--')
 ylabel('ydot (km/s)')
 
 subplot(616)
-plot(NLtime,NL_state(6,:),NLtime,noisy_NL_state(6,:))
+plot(NLtime,NL_state(6,:),NLtime,noisy_NL_state(6,:),'--')
 ylabel('zdot (km/s)')
 xlabel('Time (hours)')
 
 % plot noisy simulated data
 figure()
-for ii = 1:5
+for ii = 1:3
     meastime = y_actual_noisy(find(y_actual_noisy(:,2)==ii),1);
     noisy_u = y_actual_noisy(find(y_actual_noisy(:,2)==ii),3);
     noisy_v = y_actual_noisy(find(y_actual_noisy(:,2)==ii),4);
     noiseless_u = y_noiseless(find(y_noiseless(:,2)==ii),3);
     noiseless_v = y_noiseless(find(y_noiseless(:,2)==ii),4);
+    subplot(211)
     plot(meastime/3600,noisy_u,'x')
     hold on
     plot(meastime/3600,noiseless_u,'o')
+    ylabel('u (pixels)')
+
+    subplot(212)    
+    plot(meastime/3600,noisy_v,'x')
+    hold on
+    plot(meastime/3600,noiseless_v,'o')
+    ylabel('v (pixels)')
 end
-title('Simulated NL Measurements (lmks 1-5)')
+sgtitle('Simulated NL Measurements (lmks 1-3)')
 legend('Noisy','Noiseless')
+
+xlabel('Time(hours)')
 
 
 % plot state estimation errors
@@ -118,6 +128,8 @@ plot(time,state_est_error(1,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
+ylabel('x (km)')
+legend('Error','\pm2\sigma bounds')
 %xlim([0 10])
 %ylim([-1e-4 1e-4])
 
@@ -126,6 +138,7 @@ plot(time,state_est_error(2,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
+ylabel('y (km)')
 %xlim([0 10])
 %ylim([-1e-3 1e-3])
 
@@ -134,6 +147,8 @@ plot(time,state_est_error(3,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
+ylabel('z (km)')
+xlabel('Time (hours)')
 %xlim([0 10])
 %ylim([-1e-3 1e-3])
 
@@ -144,6 +159,8 @@ plot(time,state_est_error(4,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
+ylabel('xdot (km)')
+legend('Error','\pm2\sigma bounds')
 %xlim([0 10])
 %ylim([-1e-4 1e-4])
 
@@ -152,6 +169,7 @@ plot(time,state_est_error(5,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
+ylabel('ydot (km)')
 %xlim([0 10])
 %ylim([-1e-3 1e-3])
 
@@ -160,6 +178,8 @@ plot(time,state_est_error(6,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
+ylabel('zdot (km)')
+xlabel('Time (hours)')
 %xlim([0 10])
 %ylim([-1e-3 1e-3])
 
@@ -198,7 +218,7 @@ ylabel('NEES statistic, $\bar{\epsilon}_x$','Interpreter','latex', 'FontSize',14
 xlabel('time step, k','FontSize',14)
 title('NEES Estimation Results','FontSize',14)
 legend('NEES @ time k', 'r_1 bound', 'r_2 bound'),grid on
-%ylim([r1x-2 r2x+2])
+ylim([r1x-2 r2x+2])
 
 
 %%DO NIS TEST:
