@@ -164,7 +164,7 @@ classdef LinearizedKalmanFilter
 
         function [xM1,PM1] = timeUpd(xP0,u0,PP0,F,G,Q,Omega)
             xM1 = F*xP0 + G*u0;
-            PM1 = F*PP0*F' + Omega*Q*Omega';
+            PM1 = F*PP0*F' + Q; %Omega*Q*Omega';
         end
 
 
