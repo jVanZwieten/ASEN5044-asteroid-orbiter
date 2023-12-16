@@ -4,7 +4,7 @@ close all
 format longg
 setGlobalVariables()
 
-rng(117)
+% rng(117)
 
 dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
 gammaW = [zeros(3); eye(3)];
@@ -29,16 +29,16 @@ R = sigma_u^2*eye(p);
 W = 1e-18;
 % Qkf = DTsys.noiseMat(W, delT_observation);
 Qkf = Q;
-Qkf(1:3,1:3) = 10*Q(1:3,1:3);
-Qkf(4,4) = 8e6*Q(4,4); % only changes velocity covariance
-Qkf(5:6,5:6) = 1e9*Q(5:6,5:6);
+% Qkf(1:3,1:3) = 1e-100*Q(1:3,1:3);
+Qkf(4,4) = 4e1*Q(4,4); % only changes velocity covariance
+Qkf(5:6,5:6) = 5e3*Q(5:6,5:6);
 Nsimruns = 10;
 nMeas = length(1:delT_observation:t_end)+1;
 NEES_samps = zeros(Nsimruns,nMeas);
 NIS_samps = zeros(Nsimruns,nMeas);
 
 for k = 1:Nsimruns 
-    [X_estimate, P_estimate,NEES_hist,NIS_hist] = ExtendedKalmanFilter.Filter(X_0, P_0, Qkf, Y_noisy, R, delT_observation, landmarkPositions, data.R_CtoN);
+    [X_estimate, P_estimate,NEES_hist,NIS_hist] = ExtendedKalmanFilter.Filter(X_0, dx0, P_0, Qkf, Y_noisy, R, delT_observation, landmarkPositions, data.R_CtoN);
     NEES_samps(k,:)=NEES_hist;
     NIS_samps(k,:)=NIS_hist;
 end
