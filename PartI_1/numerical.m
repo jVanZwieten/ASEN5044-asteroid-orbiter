@@ -12,6 +12,9 @@ classdef numerical
         end
 
         function state_step = rk4_state(state,step,gammaW)
+            if nargin < 3
+                gammaW = zeros(6, 3);
+            end
 
             k1 = f.twoBody(state,gammaW)+f.solarRadPress();
             

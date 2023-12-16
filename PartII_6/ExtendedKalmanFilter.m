@@ -16,9 +16,6 @@ classdef ExtendedKalmanFilter
             NEES_hist = zeros(1,nMeas);
             NIS_hist = zeros(1,nMeas);
 
-            omegaTilde_k = dT*CTsys.Gamma;
-            omegaQomega = omegaTilde_k*Q*omegaTilde_k';
-
             for k = 2:(totalSteps + 1)
                 t = (k - 2)*dT; % t = 0 corresponds to X(:, 2), X_1, dT seconds after X_0
                 Y_epoch = Y(2:end, Y(1, :) == t);
@@ -26,7 +23,7 @@ classdef ExtendedKalmanFilter
                 Y_epoch = reshape(Y_epoch(2:3, :), 1, [])';
                 rotation_cameraToInertial = rotations_cameraToInertial(:, :, k - 1);
 
-                [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), omegaQomega, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
+                [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), Q, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
                 NEES_hist(k-1) = NEES;
                 NIS_hist(k-1) = NIS;
             end
