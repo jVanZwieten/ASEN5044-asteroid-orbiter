@@ -8,7 +8,7 @@ setGlobalVariables()
 
 
 
-dx0 = zeros(6,1);
+dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]'; %zeros(6,1);
 gammaW = [zeros(3); zeros(3)];
 % gammaW = CTsys.Gamma();   Gamma is not defined correctly right now
 W = sigma_w^2;
@@ -19,16 +19,15 @@ Q = DTsys.noiseMat(W,delT_observation);
 % :::::Define Nonlinear matrices:::::
 
 [NL_state,noisy_NL_state] = LinearizedKalmanFilter.genNLState(dx0,gammaW);
-y_table = data.y_table;
+[y_sim,y_table] = LinearizedKalmanFilter.genNLMeasFromRealMeas(NL_state,data);
 
 
 
 % :::::Calculate filtered measurements and NEES test:::::
 
 Qkf=Q;
-Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
-
-[xP,P_P,filt_total_state,~] = LinearizedKalmanFilter.LKF(NL_state,dx0,y_table,data,Qkf);
+%Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
+[xP,P_P,filt_total_state,~] = LinearizedKalmanFilter.LKF(NL_state,noisy_NL_state,dx0,y_sim,y_table,data,Qkf);
 
 
 
@@ -179,4 +178,12 @@ plot(time,filt_total_state(6,:))
 plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1))+filt_total_state(6,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1))+filt_total_state(6,:)','black --')
 %ylim([-1e-3 1e-3])
+
+RSS_error = sqrt(state_est_error(1,:).^2 + state_est_error(2,:).^2 + state_est_error(3,:).^2);
+
+figure()
+plot(time,RSS_error)
+xlabel('Time (hours)')
+ylabel('\epsilon (km)')
+title('RSS Position Error')
 
