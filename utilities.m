@@ -86,6 +86,64 @@ classdef utilities
             square = size(M, 1) == size(M, 2);
         end
         
+        function NEES = calculateNEES(X_truth, X, P)
+            steps = size(X_truth, 2);
+            assert(size(X, 2) == steps && size(P, 3) == steps)
+            assert(size(X_truth, 1) == size(X, 1) && size(X, 1) == size(P, 1) && size(P, 1) == size(P, 2))
 
+            NEES = zeros(1, size(X_truth, 2));
+            error = X_truth - X;
+            for k = 1:steps
+                NEES(k) = error(:, k)'*P(:, :, k)^-1*error(:, k);
+            end
+        end
+
+        function NEESPlot(NEES_samples, figureTitle, boundToR1x)
+            global n
+            k = size(NEES_samples, 2);
+
+            epsNEESbar = mean(NEES_samples,1);
+            alphaNEES = 0.05; %%significance level
+            Nnx = k*n;
+            r1x = chi2inv(alphaNEES/2, Nnx )./ k;
+            r2x = chi2inv(1-alphaNEES/2, Nnx )./ k;
+
+            figure
+            plot(epsNEESbar,'ro','MarkerSize',6,'LineWidth',2),hold on
+            plot(r1x*ones(size(epsNEESbar)),'r--','LineWidth',2)
+            plot(r2x*ones(size(epsNEESbar)),'r--','LineWidth',2)
+            ylabel('NEES statistic, $\bar{\epsilon}_x$','Interpreter','latex', 'FontSize',14)
+            xlabel('time step, k','FontSize',14)
+            title('NEES Estimation Results, ' + figureTitle,'FontSize',14)
+            legend('NEES @ time k', 'r_1 bound', 'r_2 bound'),grid on
+
+            if nargin > 2 && boundToR1x
+                ylim([r1x-2 r2x+2])
+            end
+        end
+
+        function NISPlot(NIS_samples, figureTitle, boundToR1y)
+            global p
+            k = size(NIS_samples, 2);
+
+            epsNISbar = mean(NIS_samples,1);
+            alphaNIS = 0.05;
+            Nny = k*p;
+            r1y = chi2inv(alphaNIS/2, Nny )./ k;
+            r2y = chi2inv(1-alphaNIS/2, Nny )./ k;
+
+            figure
+            plot(epsNISbar,'bo','MarkerSize',6,'LineWidth',2),hold on
+            plot(r1y*ones(size(epsNISbar)),'b--','LineWidth',2)
+            plot(r2y*ones(size(epsNISbar)),'b--','LineWidth',2)
+            ylabel('NIS statistic, $\bar{\epsilon}_y$','Interpreter','latex','FontSize',14)
+            xlabel('time step, k','FontSize',14)
+            title('NIS Estimation Results, ' + figureTitle,'FontSize',14)
+            legend('NIS @ time k', 'r_1 bound', 'r_2 bound'),grid on
+
+            if nargin > 2 && boundToR1y
+                ylim([r1y-2 r2y+2])
+            end
+        end
     end
 end

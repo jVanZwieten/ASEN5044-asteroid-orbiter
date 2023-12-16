@@ -1,17 +1,20 @@
 classdef numerical
     methods(Static)
-        function X = propagate(X0, dT, t_end)
+        function X = propagate(X0, dT, t_end, gammaW)
             assert(size(X0, 2) == 1)
+            if nargin < 4
+                gammaW = zeros(6, 3);
+            end
         
             X = zeros(size(X0, 1), length(1:dT:t_end) + 1);
             X(:, 1) = X0;
         
             for k=1:t_end/dT+1
-                X(:, k+1) = numerical.rk4_state(X(:, k), dT);
+                X(:, k+1) = numerical.rk4_state(X(:, k), dT, gammaW);
             end
         end
 
-        function state_step = rk4_state(state,step,gammaW)
+        function state_step = rk4_state(state, step, gammaW)
             if nargin < 3
                 gammaW = zeros(6, 3);
             end

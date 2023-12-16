@@ -1,7 +1,7 @@
 classdef ExtendedKalmanFilter
     methods(Static)
-        function [X, P, NEES_hist, NIS_hist] = Filter(X_initial, P_initial, Q, Y, R, dT, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial)
-            setGlobalVariables()
+        function [X, P, NIS_hist] = Filter(X_initial, P_initial, Q, Y, R, dT, landmarkPositionsThroughTime_inertial, rotations_cameraToInertial)
+            global n
             assert(size(X_initial, 1) == n && size(X_initial, 2) == 1)
             assert(size(P_initial, 1) == n && size(P_initial, 2) == n && size(P_initial, 3) == 1)
 
@@ -12,9 +12,7 @@ classdef ExtendedKalmanFilter
             P = zeros(n, n, totalSteps + 1);
             P(:, :, 1) = P_initial;
 
-            nMeas = length(1:delT_observation:t_end)+1;
-            NEES_hist = zeros(1,nMeas);
-            NIS_hist = zeros(1,nMeas);
+            NIS_hist = zeros(1,totalSteps);
 
             for k = 2:(totalSteps + 1)
                 t = (k - 2)*dT; % t = 0 corresponds to X(:, 2), X_1, dT seconds after X_0
@@ -25,7 +23,7 @@ classdef ExtendedKalmanFilter
 
                 [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), Q, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
                 NEES_hist(k-1) = NEES;
-                NIS_hist(k-1) = NIS;
+                NIS_hist(k-1) = NIS/length(correspondingLandmarks);
             end
         end
         
@@ -43,7 +41,7 @@ classdef ExtendedKalmanFilter
 
             XinitialEstimate_k = numerical.rk4_state(X_kPrevious, dT);
 
-            Ftilde_k = eye(n) + dT*CTsys.AEvaluated(X_kPrevious); % currently hard-coded, would love to have this take an input Abar
+            Ftilde_k = eye(n) + dT*CTsys.AEvaluated(X_kPrevious);
             P_kInitial = Ftilde_k*P_kPrevious*Ftilde_k' + omegaQomega;
 
             Yestimate = measurement.Y_epoch(XinitialEstimate_k, landmarkPositions, rotation_cameraToInertial);

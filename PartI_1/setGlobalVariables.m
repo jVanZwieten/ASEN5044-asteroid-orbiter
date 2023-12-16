@@ -1,4 +1,4 @@
-global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 XLabels XUnits P_0 n sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v p
+global mu_A T_rotationA w_A r_sa phi_0 rho Am delT_integration delT_observation t_end r_0 rDot_0 X_0 XLabels XUnits P_0 n Q sigma_w f_camera u_0 v_0 u_min v_min u_max v_max sigma_u sigma_v p R
 mu_A = 4.892E-9;                        % km^3/s^2
 T_rotationA = 4.296057;                 % h
 w_A = 2*pi/(T_rotationA*60*60);         % rad/s
@@ -21,6 +21,7 @@ P_0 = [0.01/(1000)^2*eye(3) zeros(3)      % initial state covarience
       zeros(3) 0.001/(1e6)^2*eye(3)];
 sigma_w = 1e-12;                         % km/s^2, process noise standard deviation
 n = size(X_0, 1);
+Q = DTsys.noiseMat(sigma_w^2, delT_observation);
 
 f_camera = 2089.7959;                   % pixels, camera focal length
 u_0 = 512;                              % pixels
@@ -32,3 +33,4 @@ v_min = 0;                              % pixels
 v_max = 1024;                           % pixels
 sigma_v = 0.25;                         % pixels^2
 p = 2;
+R = sigma_u^2*eye(p);
