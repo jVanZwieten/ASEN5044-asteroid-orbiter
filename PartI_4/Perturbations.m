@@ -69,32 +69,78 @@ for i = 1:tEnd/600
 
 end
 
-% plot perturbed states vs time
+
+
 tVec = (0:delTobs:tEnd)/60/60;
+%%
+% plot nonlinear and perturbed states vs time
 figure()
-sgtitle('Linearized perturbations')
+subplot(6,1,1)
+plot(tVec, NL_state(1,1:10:end))
+hold on
+plot(tVec, NL_state(1,1:10:end)+dx(1,:))
+title('Linear and Nonlinear Propagation of States','FontSize',16)
+ylabel("x (km)",'FontSize',13)
+legend('Nonlinear State','Linear State',location = 'southeast')
+
+subplot(6,1,2)
+plot(tVec, NL_state(2,1:10:end))
+hold on
+plot(tVec, NL_state(2,1:10:end)+dx(2,:))
+ylabel("y (km)",'FontSize',13)
+
+subplot(6,1,3)
+plot(tVec, NL_state(3,1:10:end))
+hold on
+plot(tVec, NL_state(3,1:10:end)+dx(3,:))
+ylabel("z (km)",'FontSize',13)
+
+subplot(6,1,4)
+plot(tVec, NL_state(4,1:10:end))
+hold on
+plot(tVec, NL_state(4,1:10:end)+dx(4,:))
+ylabel("$\dot{x}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
+
+subplot(6,1,5)
+plot(tVec, NL_state(5,1:10:end))
+hold on
+plot(tVec, NL_state(5,1:10:end)+dx(5,:))
+ylabel("$\dot{y}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
+
+subplot(6,1,6)
+plot(tVec, NL_state(6,1:10:end))
+hold on
+plot(tVec, NL_state(6,1:10:end)+dx(6,:))
+xlabel("Time (h)",'FontSize',13)
+ylabel("$\dot{z}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
+
+
+
+% plot perturbed states vs time
+figure()
+sgtitle('Linearized perturbations','FontSize',16)
 subplot(6,1,1)
 plot(tVec,dx(1,:))
-ylabel('\Deltax (km)')
+ylabel('\Deltax (km)','FontSize',13)
 
 subplot(6,1,2)
 plot(tVec,dx(2,:))
-ylabel('\Deltay (km)')
+ylabel('\Deltay (km)','FontSize',13)
 
 subplot(6,1,3)
 plot(tVec,dx(3,:))
-ylabel('\Deltaz (km/s)')
+ylabel('\Deltaz (km/s)','FontSize',13)
 
 subplot(6,1,4)
 plot(tVec,dx(4,:))
-ylabel('\Deltaxdot (km/s)')
+ylabel("$\dot{x}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
 
 
 subplot(6,1,5)
 plot(tVec,dx(5,:))
-ylabel('\Deltaydot (km/s)')
+ylabel("$\dot{y}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
 
 subplot(6,1,6)
 plot(tVec,dx(6,:))
-ylabel('\Deltazdot (km)')
-xlabel('Time (hours)')
+ylabel("$\dot{z}$ ($\frac{km}{s}$)", 'Interpreter','latex','FontSize',14)
+xlabel('Time (hours)','FontSize',13)
