@@ -70,7 +70,7 @@ classdef utilities
             Tsize = size(T, 2);
             assert(size(X_true, 2) == Tsize && size(X_estimate, 2) == Tsize && size(P, 3) == Tsize)
             
-            error = X_estimate - X_true;
+            error = X_true - X_estimate ;
             sigmas = utilities.standardDeviationsFromCovarienceMatricies(P);
             
             figure

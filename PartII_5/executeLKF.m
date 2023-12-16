@@ -32,8 +32,10 @@ Q = DTsys.noiseMat(W,delT_observation);
 % :::::Calculate filtered measurements and NEES test:::::
 
 Qkf=Q;  %cov(noisy_NL_state'-NL_state');
-%Qkf(1:3,1:3) = 1e3*eye(3);
-%Qkf(4:6,4:6) = 1e-30*eye(3); % only changes velocity covariance
+Qkf(1,1) = 5e3*Qkf(1,1);
+Qkf(2:3,2:3) = 1e7*Qkf(2:3,2:3);
+Qkf(4,4) = 1e3*Qkf(4,4); % only changes velocity covariance
+Qkf(5:6,5:6) = 5e4*Qkf(5:6,5:6);
 Nsimruns = 10;
 nMeas = length(1:delT_observation:t_end)+1;
 NEES_samps = zeros(Nsimruns,nMeas);
