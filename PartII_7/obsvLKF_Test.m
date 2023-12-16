@@ -8,7 +8,7 @@ setGlobalVariables()
 
 
 
-dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]'; %zeros(6,1);
+dx0 = zeros(6,1); %[1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]'; 
 gammaW = [zeros(3); zeros(3)];
 % gammaW = CTsys.Gamma();   Gamma is not defined correctly right now
 W = sigma_w^2;
@@ -76,7 +76,6 @@ NLtime = (0:delT_integration:(t_end+60))/3600;
 
 % plot state estimation errors
 state_est_error = filt_total_state - NL_state(:,1:10:end);
-
 figure()
 sgtitle('Position state estimation error')
 subplot(311)
@@ -84,6 +83,9 @@ plot(time,state_est_error(1,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(1,1,1:end-1),[],1)),'black --')
+ylabel('x (km)')
+legend('Error','\pm2\sigma bounds')
+%xlim([0 10])
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -91,6 +93,8 @@ plot(time,state_est_error(2,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(2,2,1:end-1),[],1)),'black --')
+ylabel('y (km)')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -98,6 +102,9 @@ plot(time,state_est_error(3,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(3,3,1:end-1),[],1)),'black --')
+ylabel('z (km)')
+xlabel('Time (hours)')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 figure()
@@ -107,6 +114,9 @@ plot(time,state_est_error(4,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(4,4,1:end-1),[],1)),'black --')
+ylabel('xdot (km)')
+legend('Error','\pm2\sigma bounds')
+%xlim([0 10])
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -114,6 +124,8 @@ plot(time,state_est_error(5,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(5,5,1:end-1),[],1)),'black --')
+ylabel('ydot (km)')
+%xlim([0 10])
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -121,7 +133,8 @@ plot(time,state_est_error(6,:))
 hold on
 plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
 plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1)),'black --')
-%ylim([-1e-3 1e-3])
+ylabel('zdot (km)')
+xlabel('Time (hours)')
 
 
 
@@ -135,6 +148,8 @@ hold on
 plot(time,filt_total_state(1,:))
 plot(time,2*sqrt(reshape(P_P(1,1,1:end-1),[],1))+filt_total_state(1,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(1,1,1:end-1),[],1))+filt_total_state(1,:)','black --')
+ylabel('x (km)')
+legend('Nominal Orbit','Total Filter State','\pm2\sigma bounds')
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -143,6 +158,7 @@ hold on
 plot(time,filt_total_state(2,:))
 plot(time,2*sqrt(reshape(P_P(2,2,1:end-1),[],1))+filt_total_state(2,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(2,2,1:end-1),[],1))+filt_total_state(2,:)','black --')
+ylabel('y (km)')
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -151,6 +167,8 @@ hold on
 plot(time,filt_total_state(3,:))
 plot(time,2*sqrt(reshape(P_P(3,3,1:end-1),[],1))+filt_total_state(3,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(3,3,1:end-1),[],1))+filt_total_state(3,:)','black --')
+ylabel('z (km)')
+xlabel('Time (hours)')
 %ylim([-1e-3 1e-3])
 
 figure()
@@ -161,6 +179,8 @@ hold on
 plot(time,filt_total_state(4,:))
 plot(time,2*sqrt(reshape(P_P(4,4,1:end-1),[],1))+filt_total_state(4,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(4,4,1:end-1),[],1))+filt_total_state(4,:)','black --')
+ylabel('xdot (km)')
+legend('Nominal Orbit','Total Filter State','\pm2\sigma bounds')
 %ylim([-1e-4 1e-4])
 
 subplot(312)
@@ -169,6 +189,7 @@ hold on
 plot(time,filt_total_state(5,:))
 plot(time,2*sqrt(reshape(P_P(5,5,1:end-1),[],1))+filt_total_state(5,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(5,5,1:end-1),[],1))+filt_total_state(5,:)','black --')
+ylabel('ydot (km)')
 %ylim([-1e-3 1e-3])
 
 subplot(313)
@@ -177,6 +198,8 @@ hold on
 plot(time,filt_total_state(6,:))
 plot(time,2*sqrt(reshape(P_P(6,6,1:end-1),[],1))+filt_total_state(6,:)','black --')
 plot(time,-2*sqrt(reshape(P_P(6,6,1:end-1),[],1))+filt_total_state(6,:)','black --')
+ylabel('zdot (km)')
+xlabel('Time (hours)')
 %ylim([-1e-3 1e-3])
 
 RSS_error = sqrt(state_est_error(1,:).^2 + state_est_error(2,:).^2 + state_est_error(3,:).^2);
