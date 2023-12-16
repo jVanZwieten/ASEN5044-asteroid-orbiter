@@ -25,7 +25,7 @@ classdef ExtendedKalmanFilter
 
                 [X(:, k), P(:, :, k), NEES, NIS] = ExtendedKalmanFilter.propagateExtendedKalmanFilter(X(:, k - 1), P(:, :, k - 1), Q, dT, Y_epoch, R, correspondingLandmarks, rotation_cameraToInertial);
                 NEES_hist(k-1) = NEES;
-                NIS_hist(k-1) = NIS;
+                NIS_hist(k-1) = NIS/length(correspondingLandmarks);
             end
         end
         
@@ -41,7 +41,9 @@ classdef ExtendedKalmanFilter
         function [Xestimate_k, P_k, NEES_k, NIS_k] = propagateExtendedKalmanFilter(X_kPrevious, P_kPrevious, omegaQomega, dT, Y_k, R, landmarkPositions, rotation_cameraToInertial)
             global n
 
-            XinitialEstimate_k = numerical.rk4_state(X_kPrevious, dT);
+            gammaW = [zeros(3); eye(3)];
+
+            XinitialEstimate_k = numerical.rk4_state(X_kPrevious, dT, gammaW);
 
             Ftilde_k = eye(n) + dT*CTsys.AEvaluated(X_kPrevious); % currently hard-coded, would love to have this take an input Abar
             P_kInitial = Ftilde_k*P_kPrevious*Ftilde_k' + omegaQomega;
@@ -55,6 +57,7 @@ classdef ExtendedKalmanFilter
 
             Xestimate_k = XinitialEstimate_k + K_k*error_k;
             P_k = (eye(n) - K_k*Htilde_k)*P_kInitial;
+            chol(P_k);  % Should crash if we do something dumb
 
             ex = -Xestimate_k;
             ey = error_k;
