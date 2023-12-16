@@ -1,10 +1,12 @@
 %%% Final Project - Orbit Determination
 
 close all
-%clc, clear
+clc, clear
+
 % load in data from canvas
 %load("C:\Users\jared\MATLAB Drive\ASEN5044\Project" + ...
 %    "\orbitdetermination-finalproj_data_2023_11_14.mat")
+data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
 
 % % plot landmarks in 3D (uncomment to see plot)
 % figure(1)
@@ -104,14 +106,14 @@ y_sim=[];
 
 
 for ind = 1:length(meas_tspan) % what time point you're checking at
-    i_C = R_CtoN(:,1,ind);
-    j_C = R_CtoN(:,2,ind);
-    k_C = R_CtoN(:,3,ind);
+    i_C = data.R_CtoN(:,1,ind);
+    j_C = data.R_CtoN(:,2,ind);
+    k_C = data.R_CtoN(:,3,ind);
     r = x_NL(10*(ind-1) + 1,1:3)'; % every tenth position
 
     % determine which landmarks are in view and in front
-    for jj = 1:length(pos_lmks_A) % which landmarks to check if in FOV
-        l = R_AtoN(:,:,10*(ind-1)+1)*pos_lmks_A(:,jj); % convert lmk to inertial
+    for jj = 1:length(data.pos_lmks_A) % which landmarks to check if in FOV
+        l = R_AtoN(:,:,10*(ind-1)+1)*data.pos_lmks_A(:,jj); % convert lmk to inertial
         u = f_C*(dot(l-r,i_C)/dot(l-r,k_C)) + u0;
         v = f_C*(dot(l-r,j_C)/dot(l-r,k_C)) + v0;
         landmark_in_FOV = (u>0 && u<u_max) && (v>0 && v<v_max) && (dot(l-r,k_C)>0);
@@ -138,7 +140,7 @@ for k = 1:5
     i=1; % reset i
     figure() % open new figure
 
-    while i <= length(pos_lmks_A)
+    while i <= length(data.pos_lmks_A)
 
          % need to look for k sets of 10 landmarks and plot u,v values vs
          % time with legend
@@ -152,22 +154,21 @@ for k = 1:5
          subplot(211)
          plot(time/3600,u,markers{i}) 
          hold on
-         legend(lmk)
+         legend(lmk,'FontSize',11)
          subplot(212)
          plot(time/3600,v,markers{i})
          hold on
-         legend(lmk) 
+         legend(lmk,'FontSize',11) 
          
          % if i gets to 11 (limit each plot to 10 landmarks)
          if mod(i,10) == 0
             % label plots and break
             subplot(211)
-            xlabel('Time (hours)')
-            ylabel('u (pixels)')
-            sgtitle('Simulated Nonlinear Measurements')
+            ylabel('u (pixels)','FontSize',15)
+            sgtitle('Simulated Nonlinear Measurements','FontSize',18)
             subplot(212)
-            xlabel('Time (hours)')
-            ylabel('v (pixels)')
+            xlabel('Time (hours)','FontSize',15)
+            ylabel('v (pixels)','FontSize',15)
             lmk=[];
             break
          end
