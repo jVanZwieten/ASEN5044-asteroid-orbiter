@@ -145,5 +145,122 @@ classdef utilities
                 ylim([r1y-2 r2y+2])
             end
         end
+
+        function plotSimulatedYNoise(Y_noiseless, Y_noisy)
+            figure()
+            for ii = 1:3
+                meastime = Y_noisy(1, Y_noisy(2, :)==ii);
+                noisy_u = Y_noisy(3, Y_noisy(2, :)==ii);
+                noisy_v = Y_noisy(4, Y_noisy(2, :)==ii);
+                noiseless_u = Y_noiseless(3, Y_noiseless(2, :)==ii);
+                noiseless_v = Y_noiseless(4, Y_noiseless(2, :)==ii);
+                subplot(211)
+                plot(meastime/3600,noisy_u,'x')
+                hold on
+                plot(meastime/3600,noiseless_u,'o')
+                ylabel('u (pixels)')
+
+                subplot(212)
+                plot(meastime/3600,noisy_v,'x')
+                hold on
+                plot(meastime/3600,noiseless_v,'o')
+                ylabel('v (pixels)')
+            end
+            sgtitle('Simulated NL Measurements (lmks 1-3)')
+            legend('Noisy','Noiseless')
+
+            xlabel('Time(hours)')
+        end
+
+        function  plotSimulatedTrajectories(T, X_noiseless, X_noisy)
+            figure()
+            subplot(611)
+            sgtitle('Typical Noisy Truth Trajectory')
+            plot(T, X_noiseless(1,:), T, X_noisy(1,:),'--')
+            ylabel('x (km)')
+            legend('Noiseless','Noisy')
+
+            subplot(612)
+            plot(T,X_noiseless(2,:), T,X_noisy(2,:),'--')
+            ylabel('y (km)')
+
+            subplot(613)
+            plot(T,X_noiseless(3,:),T,X_noisy(3,:),'--')
+            ylabel('z (km)')
+
+            subplot(614)
+            plot(T,X_noiseless(4,:),T,X_noisy(4,:),'--')
+            ylabel('xdot (km/s)')
+
+            subplot(615)
+            plot(T,X_noiseless(5,:),T,X_noisy(5,:),'--')
+            ylabel('ydot (km/s)')
+
+            subplot(616)
+            plot(T,X_noiseless(6,:),T,X_noisy(6,:),'--')
+            ylabel('zdot (km/s)')
+            xlabel('Time (hours)')
+        end
+
+        function plotStateEstimationErrors (T, X_truth, X_estimate, P)
+            error = X_estimate - X_truth;
+            sigmas = utilities.standardDeviationsFromCovarienceMatricies(P);
+
+            figure()
+            sgtitle('Position state estimation error')
+            subplot(311)
+            plot(T, error(1,:))
+            hold on
+            plot(T,2*sigmas(1, :),'black --')
+            plot(T,-2*sigmas(1, :),'black --')
+            ylabel('x (km)')
+            legend('Error','\pm2\sigma bounds')
+
+            subplot(312)
+            plot(T,error(2,:))
+            hold on
+            plot(T,2*sigmas(2, :),'black --')
+            plot(T,-2*sigmas(2, :),'black --')
+            ylabel('y (km)')
+
+            subplot(313)
+            plot(T,error(3,:))
+            hold on
+            plot(T,2*sigmas(3, :),'black --')
+            plot(T,-2*sigmas(3, :),'black --')
+            ylabel('z (km)')
+            xlabel('Time (hours)')
+            %xlim([0 10])
+            %ylim([-1e-3 1e-3])
+
+            figure()
+            sgtitle('Velocity state estimation error')
+            subplot(311)
+            plot(T,error(4,:))
+            hold on
+            plot(T,2*sigmas(4, :),'black --')
+            plot(T,-2*sigmas(4, :),'black --')
+            ylabel('xdot (km)')
+            legend('Error','\pm2\sigma bounds')
+            %xlim([0 10])
+            %ylim([-1e-4 1e-4])
+
+            subplot(312)
+            plot(T,error(5,:))
+            hold on
+            plot(T,2*sigmas(5, :),'black --')
+            plot(T,-2*sigmas(5, :),'black --')
+            ylabel('ydot (km)')
+            %xlim([0 10])
+            %ylim([-1e-3 1e-3])
+
+            subplot(313)
+            plot(T,error(6,:))
+            hold on
+            plot(T,2*sigmas(6, :),'black --')
+            plot(T,-2*sigmas(6, :),'black --')
+            ylabel('zdot (km)')
+            xlabel('Time (hours)')
+        end
     end
 end

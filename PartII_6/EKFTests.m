@@ -26,7 +26,7 @@ classdef EKFTests
         
         function X_observe = generateXTrueObserved(X_0, noise)
             global delT_integration delT_observation t_end
-            if(noise)
+            if nargin > 1 && noise
                 gamma = [zeros(3); eye(3)];
             else
                 gamma = zeros(6,3);
@@ -111,20 +111,28 @@ classdef EKFTests
             EKFTests.truthModelTest(X_processNoiseObserved, X_0, P_0, Y_processNoiseObserved, "Process Noise")
         end
 
-        function [X, Y] = generateProcessNoiseSim(X_0)
+        function [X, Y] = generateProcessNoiseSim(X_0, signalNoise)
+            if nargin < 2
+                signalNoise = false;
+            end
+
             X = EKFTests.generateXTrueObserved(X_0, true);
-            Y = EKFTests.YFromX(X);
+            Y = EKFTests.YFromX(X, signalNoise);
         end
 
-        function [X, Y] = MonteCarloTruthSimulations(X_0, iterations)
-            [X_processNoiseObserved0, Y_processNoiseObserved0] = EKFTests.generateProcessNoiseSim(X_0);
+        function [X, Y] = MonteCarloTruthSimulations(X_0, iterations, signalNoise)
+            if nargin < 3
+                signalNoise = false;
+            end
+
+            [X_processNoiseObserved0, Y_processNoiseObserved0] = EKFTests.generateProcessNoiseSim(X_0, signalNoise);
             X = zeros(size(X_processNoiseObserved0, 1), size(X_processNoiseObserved0, 2), iterations);
             X(:, :, 1) = X_processNoiseObserved0;
             Y = cell(iterations);
             Y{1} = Y_processNoiseObserved0;
             
             for i = 2:iterations
-                [X(:, :, i), Y{i}] = EKFTests.generateProcessNoiseSim(X_0);
+                [X(:, :, i), Y{i}] = EKFTests.generateProcessNoiseSim(X_0, signalNoise);
             end
         end
 
@@ -134,6 +142,40 @@ classdef EKFTests
 
             [X_processNoiseObserved, Y_processNoiseObserved] = EKFTests.MonteCarloTruthSimulations(X_0 + EKFTests.dX_0, EKFTests.MonteCarloIterations);
             EKFTests.truthModelTest(X_processNoiseObserved, X_0, P_0, Y_processNoiseObserved, "Process Noise")
+        end
+
+        function fullNoise()
+            EKFTests.setup()
+            global X_0 P_0 Qkf R T landmarkPositions delT_observation
+
+            [X_truth, Y] = EKFTests.MonteCarloTruthSimulations(X_0, EKFTests.MonteCarloIterations);
+
+            X_truthTypical = X_truth(:, :, 1);
+            Y_typical = Y{1};
+
+            Y_noisy = cell(length(Y));
+            for i = 1:length(Y)
+                Y_noisy{i} = Y{i};
+                Y_noisy{i}(3:4, :) = mvnrnd(Y{i}(3:4, :)', R)';
+            end
+
+            X_Noiseless = EKFTests.generateXTrueObserved(X_0);
+            utilities.plotSimulatedTrajectories(T(2:end), X_Noiseless, X_truthTypical)
+            
+            Y_noisyTypical = Y_noisy{1};
+            utilities.plotSimulatedYNoise(Y_typical,  Y_noisyTypical)
+
+            monteCarloIterations = size(X_truth, 3);
+            totalSteps = size(X_truth, 2);
+            NEES = zeros(monteCarloIterations, totalSteps);
+            NIS = zeros(monteCarloIterations, totalSteps);
+            
+            for i = 1:monteCarloIterations
+                [X, P, NIS(i,:)] = ExtendedKalmanFilter.Filter(X_0, P_0, Qkf, Y_noisy{i}, R, delT_observation, landmarkPositions, EKFTests.data.R_CtoN);
+                NEES(i,:) = utilities.calculateNEES(X_truth(:, :, i), X(:, 2:end), P(:, :, 2:end));
+            end
+            utilities.plotStateEstimationErrors(T(2:end), X_truth(:, :, end), X(:, 2:end), P(:, :, 2:end))
+
         end
     end
 end
