@@ -7,12 +7,14 @@ setGlobalVariables()
 rng(117)
 
 dx0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
+gammaW = [zeros(3); eye(3)];
 
 % no noise test
 data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
-X_truth = numerical.propagate(X_0, delT_integration, t_end + delT_observation); % +delT_observation accounts for  t = 0
-X_perturbed = numerical.propagate(X_0+dx0, delT_integration, t_end + delT_observation);
-X_noisy = X_perturbed + noiseMaker(zeros(6,1),kron([0 0; 0 1],(sigma_w^2)*eye(3)),length(X_perturbed))';
+% X_truth = numerical.propagate(X_0, delT_integration, t_end + delT_observation); % +delT_observation accounts for  t = 0
+% X_perturbed = numerical.propagate(X_0+dx0, delT_integration, t_end + delT_observation);
+% X_noisy = X_perturbed + noiseMaker(zeros(6,1),kron([0 0; 0 1],(sigma_w^2)*eye(3)),length(X_perturbed))';
+[X_truth,X_noisy] = LinearizedKalmanFilter.genNLState(dx0,gammaW);
 Q = DTsys.noiseMat(sigma_w^2, delT_observation);
 % utilities.plot3D(X_truth(1:3, :), [-1 1; -1 1; -1 1], "no process noise orbit")
 
@@ -22,19 +24,21 @@ X_truthAtObservationEpochs = X_truth(:, (1 + integrationObservationRatio):integr
 X_noisyAtObservationEpochs = X_noisy(:, (1 + integrationObservationRatio):integrationObservationRatio:end);
 R = sigma_u^2*eye(p);
 [Y_simulated,~] = measurement.SimulateYData(X_truthAtObservationEpochs, landmarkPositions, data.R_CtoN, R, delT_observation);
-% [Y_perturbed,Y_noisy] = measurement.SimulateYData(X_noisy, landmarkPositions, data.R_CtoN, R, delT_observation);
+[Y_perturbed,Y_noisy] = measurement.SimulateYData(X_noisyAtObservationEpochs, landmarkPositions, data.R_CtoN, R, delT_observation);
 
 W = 1e-18;
-Qkf = DTsys.noiseMat(W, delT_observation);
-% Qkf(1:3,1:3) = 1e100*eye(3);
-% Qkf(4:6,4:6) = 1e-14*eye(3); % only changes velocity covariance
+% Qkf = DTsys.noiseMat(W, delT_observation);
+Qkf = Q;
+Qkf(1:3,1:3) = 10*Q(1:3,1:3);
+Qkf(4,4) = 8e6*Q(4,4); % only changes velocity covariance
+Qkf(5:6,5:6) = 1e9*Q(5:6,5:6);
 Nsimruns = 10;
 nMeas = length(1:delT_observation:t_end)+1;
 NEES_samps = zeros(Nsimruns,nMeas);
 NIS_samps = zeros(Nsimruns,nMeas);
 
 for k = 1:Nsimruns 
-    [X_estimate, P_estimate,NEES_hist,NIS_hist] = ExtendedKalmanFilter.Filter(X_0, P_0, Qkf, Y_simulated, R, delT_observation, landmarkPositions, data.R_CtoN);
+    [X_estimate, P_estimate,NEES_hist,NIS_hist] = ExtendedKalmanFilter.Filter(X_0, P_0, Qkf, Y_noisy, R, delT_observation, landmarkPositions, data.R_CtoN);
     NEES_samps(k,:)=NEES_hist;
     NIS_samps(k,:)=NIS_hist;
 end
@@ -42,8 +46,11 @@ end
 
 
 T = (-600:delT_observation:t_end)/60/60;
-utilities.confidencePlots(T, X_estimate, P_estimate, 2, "State Estimate, no noise", XLabels, XUnits)
-utilities.errorPlots(T(:, 2:end), X_truthAtObservationEpochs, X_estimate(:, 2:end), P_estimate(:, :, 2:end), 2, "Error, no noise", XLabels, XUnits)
+
+% INPUTS FOR THIS FUNCTION DON'T MATCH REQUIRED INPUTS -->
+% utilities.confidencePlots(T, X_estimate, P_estimate, 2, "State Estimate, no noise", XLabels, XUnits)
+
+utilities.errorPlots(T(:, 2:end-1), X_truthAtObservationEpochs, X_estimate(:, 2:end), P_estimate(:, :, 2:end), 2, "Error, no noise", XLabels, XUnits)
 
 epsNEESbar = mean(NEES_samps,1);
 alphaNEES = 0.05; %%significance level
@@ -77,7 +84,7 @@ ylabel('NIS statistic, $\bar{\epsilon}_y$','Interpreter','latex','FontSize',14)
 xlabel('time step, k','FontSize',14)
 title('NIS Estimation Results','FontSize',14)
 legend('NIS @ time k', 'r_1 bound', 'r_2 bound'),grid on
-ylim([r1y-2 r2y+2])
+% ylim([r1y-2 r2y+2])
 
 % process noise test
 % X_truthWithNoise = mvnrnd(X_truth', Q)';
