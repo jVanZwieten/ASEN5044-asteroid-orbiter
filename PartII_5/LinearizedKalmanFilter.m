@@ -80,6 +80,46 @@ classdef LinearizedKalmanFilter
             end
         end
 
+        function [y_sim,y_table] = genNLMeasFromRealMeas(NL_state,data)
+            setGlobalVariables()
+            y_table = data.y_table;
+            y_sim=[];
+
+            for j=1:(t_end/delT_observation)+1
+                time = (j-1)*delT_observation;
+
+                if(time <= 72*60*60)
+                    NLind = ((j-1)*10)+1;
+
+                    r = NL_state(1:3,NLind);
+
+                    Rcn = data.R_CtoN(:,:,j);
+                    ic = Rcn(:,1);
+                    jc = Rcn(:,2);
+                    kc = Rcn(:,3);
+            
+                    theta = w_A*time;
+                    Rna = [cos(theta) -sin(theta) 0;
+                           sin(theta) cos(theta) 0;
+                           0 0 1];
+
+                    vis_lmks = y_table(find(y_table(:,1)==time),2);
+                    % if a lmk is visible according to the sensor, compute
+                    % the NL meas from the nominal orbit, regardless of
+                    % visibility
+                    for i=1:length(vis_lmks)
+                        l = vis_lmks(i);
+                        lpos = data.pos_lmks_A(:,l);
+                        lrot = Rna*lpos;
+
+                        u_sim = ((f_camera*(lrot-r)'*ic)/((lrot-r)'*kc)) + u_0;
+                        v_sim = ((f_camera*(lrot-r)'*jc)/((lrot-r)'*kc)) + v_0;
+
+                        y_sim(end+1,:) = [time l u_sim v_sim];
+                    end
+                end
+            end
+        end
 
         function [xP,P_P,filt_total_state,NEES_hist,NIS_hist] = LKF(NL_state,noisy_NL_state,dx0,y_table,y_actual_noisy,data,Qkf)
             setGlobalVariables()
@@ -164,7 +204,7 @@ classdef LinearizedKalmanFilter
 
         function [xM1,PM1] = timeUpd(xP0,u0,PP0,F,G,Q,Omega)
             xM1 = F*xP0 + G*u0;
-            PM1 = F*PP0*F' + Omega*Q*Omega';
+            PM1 = F*PP0*F' + Q; %Omega*Q*Omega';
         end
 
 

@@ -8,36 +8,31 @@ global X_0 delT_integration t_end
 
 X = numerical.propagate(X_0, delT_integration, t_end);
 
-tVec = (1:delT_integration:t_end)/60/60;
+tVec = (0:delT_integration:t_end)/60/60;
 
 figure()
 subplot(6,1,1)
 plot(tVec, X(1,1:end-1))
-title('Nonlinear States vs Time')
-xlabel("Time (h)")
-ylabel("x (km)")
+title('Nonlinear States vs Time','FontSize',18)
+ylabel("x (km)",'FontSize',15)
 
 subplot(6,1,2)
 plot(tVec, X(2,1:end-1))
-xlabel("Time (h)")
-ylabel("y (km)")
+ylabel("y (km)",'FontSize',15)
 
 subplot(6,1,3)
 plot(tVec, X(3,1:end-1))
-xlabel("Time (h)")
-ylabel("z (km)")
+ylabel("z (km)",'FontSize',15)
 
 subplot(6,1,4)
 plot(tVec, X(4,1:end-1))
-xlabel("Time (h)")
-ylabel("$\dot{x}$ (km/s)", 'Interpreter', 'latex')
+ylabel("$\dot{x}$ ($\frac{km}{s}$)", 'Interpreter','latex','fontweight','bold','FontSize',16)
 
 subplot(6,1,5)
 plot(tVec, X(5,1:end-1))
-xlabel("Time (h)")
-ylabel("$\dot{y}$ (km/s)", 'Interpreter', 'latex')
+ylabel("$\dot{y}$ ($\frac{km}{s}$)", 'Interpreter','latex','fontweight','bold','FontSize',16)
 
 subplot(6,1,6)
 plot(tVec, X(6,1:end-1))
-xlabel("Time (h)")
-ylabel("$\dot{z}$ (km/s)", 'Interpreter', 'latex')
+xlabel("Time (h)",'FontSize',15)
+ylabel("$\dot{z}$ ($\frac{km}{s}$)", 'Interpreter','latex','fontweight','bold','FontSize',16)
