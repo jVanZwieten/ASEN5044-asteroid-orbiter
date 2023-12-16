@@ -1,7 +1,7 @@
 classdef EKFTests
     properties(Constant)
         data = load("orbitdetermination-finalproj_data_2023_11_14.mat");
-        W = 1e-11; % tune on this property
+        W = 1.4e-11; % tune on this property
         dX_0 = [1e-5 1e-5 1e-5 1e-7 1e-7 1e-7]';
         MonteCarloIterations = 10;
         
@@ -176,6 +176,8 @@ classdef EKFTests
             end
             utilities.plotStateEstimationErrors(T(2:end), X_truth(:, :, end), X(:, 2:end), P(:, :, 2:end))
 
+            utilities.NEESPlot(NEES, "")
+            utilities.NISPlot(NIS, "")
         end
     end
 end
