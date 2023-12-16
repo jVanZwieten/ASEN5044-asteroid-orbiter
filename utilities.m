@@ -100,7 +100,7 @@ classdef utilities
 
         function NEESPlot(NEES_samples, figureTitle, boundToR1x)
             global n
-            k = size(NEES_samples, 2);
+            k = size(NEES_samples, 1);
 
             epsNEESbar = mean(NEES_samples,1);
             alphaNEES = 0.05; %%significance level
